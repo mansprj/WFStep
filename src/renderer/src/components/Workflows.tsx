@@ -49,6 +49,13 @@ function WorkflowEditor({
     setSteps((current) => current.filter((_, i) => i !== index))
   }
 
+  const browse = async (index: number): Promise<void> => {
+    const path = await window.api.dialogs.selectExecutable()
+    if (path !== null) {
+      updateStep(index, { value: path })
+    }
+  }
+
   const submit = async (): Promise<void> => {
     if (await onSubmit(name, steps)) {
       setName('')
@@ -91,6 +98,17 @@ function WorkflowEditor({
               onChange={(event) => updateStep(index, { value: event.target.value })}
               disabled={busy}
             />
+            {step.kind === 'start' && (
+              <button
+                type="button"
+                className="workflow-browse"
+                onClick={() => browse(index)}
+                disabled={busy}
+                title="Browse for executable"
+              >
+                Browse…
+              </button>
+            )}
             <button
               type="button"
               onClick={() => removeStep(index)}

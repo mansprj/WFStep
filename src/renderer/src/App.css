@@ -197,6 +197,11 @@ button.secondary:disabled {
   cursor: pointer;
 }
 
+.workflow-step button.workflow-browse:hover {
+  border-color: var(--accent);
+  color: var(--accent);
+}
+
 .workflow-step button:hover {
   border-color: var(--error);
   color: var(--error);
