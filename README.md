@@ -1,75 +1,90 @@
-# React + TypeScript + Vite
+# AutomationHub
 
-This template provides a minimal setup to get React working in Vite with HMR and some ESLint rules.
+AutomationHub is a Windows desktop application for automating repetitive desktop tasks through a clean graphical interface.
 
-Currently, two official plugins are available:
+## Current Features
 
-- [@vitejs/plugin-react](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react) uses [Oxc](https://oxc.rs)
-- [@vitejs/plugin-react-swc](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react-swc) uses [SWC](https://swc.rs/)
+- Restart Discord with one click (validates the whole application architecture)
 
-## React Compiler
+## Roadmap
 
-The React Compiler is not enabled on this template because of its impact on dev & build performances. To add it, see [this documentation](https://react.dev/learn/react-compiler/installation).
+- Process management (find, kill, restart, launch, status)
+- Automation actions (start/stop/restart app, delay, shell command, open URL/folder)
+- Visual workflow engine (combine actions into sequences)
+- Global hotkeys
+- User profiles
+- Plugin system
 
-## Expanding the ESLint configuration
+## Tech Stack
 
-If you are developing a production application, we recommend updating the configuration to enable type-aware lint rules:
+- Electron
+- electron-vite (build tool: dev server, main/preload build, HMR)
+- React + TypeScript
+- Vite
 
-```js
-export default defineConfig([
-  globalIgnores(['dist']),
-  {
-    files: ['**/*.{ts,tsx}'],
-    extends: [
-      // Other configs...
+## Getting Started
 
-      // Remove tseslint.configs.recommended and replace with this
-      tseslint.configs.recommendedTypeChecked,
-      // Alternatively, use this for stricter rules
-      tseslint.configs.strictTypeChecked,
-      // Optionally, add this for stylistic rules
-      tseslint.configs.stylisticTypeChecked,
+### Prerequisites
 
-      // Other configs...
-    ],
-    languageOptions: {
-      parserOptions: {
-        project: ['./tsconfig.node.json', './tsconfig.app.json'],
-        tsconfigRootDir: import.meta.dirname,
-      },
-      // other options...
-    },
-  },
-])
+- Node.js 20.19+ / 22.12+
+- npm
 
+### Install
+
+```sh
+npm install
 ```
 
-You can also install [eslint-plugin-react-x](https://github.com/Rel1cx/eslint-react/tree/main/packages/plugins/eslint-plugin-react-x) and [eslint-plugin-react-dom](https://github.com/Rel1cx/eslint-react/tree/main/packages/plugins/eslint-plugin-react-dom) for React-specific lint rules:
+### Run in development
 
-```js
-// eslint.config.js
-import reactX from 'eslint-plugin-react-x'
-import reactDom from 'eslint-plugin-react-dom'
+```sh
+npm run dev
+```
 
-export default defineConfig([
-  globalIgnores(['dist']),
-  {
-    files: ['**/*.{ts,tsx}'],
-    extends: [
-      // Other configs...
-      // Enable lint rules for React
-      reactX.configs['recommended-typescript'],
-      // Enable lint rules for React DOM
-      reactDom.configs.recommended,
-    ],
-    languageOptions: {
-      parserOptions: {
-        project: ['./tsconfig.node.json', './tsconfig.app.json'],
-        tsconfigRootDir: import.meta.dirname,
-      },
-      // other options...
-    },
-  },
-])
+Builds the main and preload processes, starts the Vite dev server for the renderer, and launches the Electron window with hot reload.
+
+### Build for production
+
+```sh
+npm run build
+npm start
+```
+
+## Scripts
+
+| Script | Description |
+| --- | --- |
+| `npm run dev` | Start development with hot reload |
+| `npm run build` | Typecheck, then build main/preload/renderer to `out/` |
+| `npm start` | Preview the production build in Electron |
+| `npm run lint` | Run ESLint |
+| `npm run typecheck` | Typecheck node and web projects |
+
+## Project Structure
 
 ```
+src/
+├── main/        # Electron main process (window, IPC, process management)
+├── preload/     # contextBridge API exposed to the renderer
+├── renderer/    # React UI (Vite)
+│   ├── public/
+│   └── src/
+└── shared/      # types shared between main and renderer
+```
+
+## Architecture
+
+```
+React UI
+   ↓  window.api.* (exposed via contextBridge)
+   ↓  IPC (invoke / handle)
+Electron Main Process
+   ↓
+Windows API / Node.js
+```
+
+The renderer never accesses Node.js APIs directly — everything goes through IPC. This keeps the frontend decoupled and prepares the ground for plugins and automation workflows.
+
+## Documentation
+
+Development decisions, status, and roadmap live in the `memory/` folder.
