@@ -77,6 +77,7 @@ function AppForm({
         onChange={(event) => setProcessName(event.target.value)}
         disabled={busy}
       />
+      <p className="help">Used only when no executable path is set.</p>
 
       <div className="actions">
         <button type="button" onClick={submit} disabled={busy}>
