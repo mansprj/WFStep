@@ -4,7 +4,9 @@ import { selectExecutable } from './dialogs'
 import {
   getProcessStatus,
   killProcess,
+  killProcessByExe,
   launchProcess,
+  restartExe,
   restartProcess,
 } from './processManager'
 import { executeAction } from './actions/executor'
@@ -20,6 +22,12 @@ export function registerIpcHandlers(): void {
   )
   ipcMain.handle('process:restart', (_event, processName: string) =>
     restartProcess(processName),
+  )
+  ipcMain.handle('process:killExe', (_event, exePath: string) =>
+    killProcessByExe(exePath),
+  )
+  ipcMain.handle('process:restartExe', (_event, exePath: string) =>
+    restartExe(exePath),
   )
   ipcMain.handle('process:launch', (_event, exePath: string) =>
     launchProcess(exePath),

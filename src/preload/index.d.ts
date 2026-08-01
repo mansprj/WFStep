@@ -9,6 +9,8 @@ declare global {
         status: (name: string) => Promise<ProcessStatus>
         kill: (name: string) => Promise<ActionResult>
         restart: (name: string) => Promise<ActionResult>
+        killByPath: (path: string) => Promise<ActionResult>
+        restartByPath: (path: string) => Promise<ActionResult>
         launch: (path: string) => Promise<ActionResult>
       }
       dialogs: {

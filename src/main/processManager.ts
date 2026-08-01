@@ -1,5 +1,6 @@
 import { execFile, spawn } from 'node:child_process'
 import { existsSync, statSync } from 'node:fs'
+import { basename } from 'node:path'
 import { promisify } from 'node:util'
 import type { ActionResult, ProcessStatus } from '@shared/types'
 
@@ -125,4 +126,69 @@ export async function restartProcess(processName: string): Promise<ActionResult>
   }
 
   return { success: true, message: `${processName} was restarted.` }
+}
+
+// Kills every running instance of the executable by its image name, so the
+// restart/stop of a saved app does not depend on a hand-typed process name.
+export async function killProcessByExe(exePath: string): Promise<ActionResult> {
+  const path = exePath.trim()
+  if (path.length === 0) {
+    return { success: false, message: 'Executable path is empty.' }
+  }
+  if (!existsSync(path)) {
+    return { success: false, message: `File not found: ${path}` }
+  }
+
+  const imageName = basename(path)
+  try {
+    await execFileAsync('taskkill', ['/IM', imageName, '/F', '/T'])
+    return { success: true, message: `${imageName} was stopped.` }
+  } catch (error) {
+    const message = errorMessage(error).toLowerCase()
+    if (message.includes('not found')) {
+      return { success: true, message: `${imageName} is not running.` }
+    }
+    return {
+      success: false,
+      message: `Failed to stop ${imageName}: ${errorMessage(error)}`,
+    }
+  }
+}
+
+// Restarts an app by its executable path: kills any running instance (if any)
+// and launches the executable again.
+export async function restartExe(exePath: string): Promise<ActionResult> {
+  const path = exePath.trim()
+  if (path.length === 0) {
+    return { success: false, message: 'Executable path is empty.' }
+  }
+  if (!existsSync(path)) {
+    return { success: false, message: `File not found: ${path}` }
+  }
+  if (statSync(path).isDirectory()) {
+    return {
+      success: false,
+      message: `${path} is a directory. Specify an executable file.`,
+    }
+  }
+
+  const imageName = basename(path)
+  try {
+    await execFileAsync('taskkill', ['/IM', imageName, '/F', '/T'])
+  } catch (error) {
+    const message = errorMessage(error).toLowerCase()
+    if (!message.includes('not found')) {
+      return {
+        success: false,
+        message: `Failed to stop ${imageName}: ${errorMessage(error)}`,
+      }
+    }
+  }
+
+  const launchResult = await launchProcess(path)
+  if (!launchResult.success) {
+    return launchResult
+  }
+
+  return { success: true, message: `${imageName} was restarted.` }
 }

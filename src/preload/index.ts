@@ -7,6 +7,8 @@ const api = {
     status: (name: string) => ipcRenderer.invoke('process:status', name),
     kill: (name: string) => ipcRenderer.invoke('process:kill', name),
     restart: (name: string) => ipcRenderer.invoke('process:restart', name),
+    killByPath: (path: string) => ipcRenderer.invoke('process:killExe', path),
+    restartByPath: (path: string) => ipcRenderer.invoke('process:restartExe', path),
     launch: (path: string) => ipcRenderer.invoke('process:launch', path),
   },
   dialogs: {

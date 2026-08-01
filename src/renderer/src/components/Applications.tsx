@@ -166,12 +166,20 @@ function Applications() {
       } else {
         outcome = await window.api.process.launch(app.executablePath)
       }
-    } else if (app.processName === null) {
-      outcome = { success: false, message: 'No process name set for this app.' }
+    } else if (action === 'restart') {
+      if (app.executablePath !== null) {
+        outcome = await window.api.process.restartByPath(app.executablePath)
+      } else if (app.processName !== null) {
+        outcome = await window.api.process.restart(app.processName)
+      } else {
+        outcome = { success: false, message: 'No executable path or process name set.' }
+      }
+    } else if (app.executablePath !== null) {
+      outcome = await window.api.process.killByPath(app.executablePath)
+    } else if (app.processName !== null) {
+      outcome = await window.api.process.kill(app.processName)
     } else {
-      outcome = action === 'restart'
-        ? await window.api.process.restart(app.processName)
-        : await window.api.process.kill(app.processName)
+      outcome = { success: false, message: 'No executable path or process name set.' }
     }
 
     setBusy(false)
@@ -219,7 +227,7 @@ function Applications() {
                     >
                       Launch
                     </button>
-                    {app.processName !== null && (
+                    {app.executablePath !== null || app.processName !== null ? (
                       <>
                         <button
                           type="button"
@@ -236,7 +244,7 @@ function Applications() {
                           Stop
                         </button>
                       </>
-                    )}
+                    ) : null}
                     <button
                       type="button"
                       onClick={() => {
