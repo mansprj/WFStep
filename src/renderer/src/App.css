@@ -284,8 +284,8 @@ button.secondary:disabled {
 }
 
 .workflow-icon {
-  width: 40px;
-  height: 40px;
+  width: 56px;
+  height: 56px;
   flex-shrink: 0;
 }
 
@@ -300,8 +300,8 @@ button.secondary:disabled {
 }
 
 .workflow-icon.default svg {
-  width: 20px;
-  height: 20px;
+  width: 28px;
+  height: 28px;
 }
 
 .workflow-progress {
