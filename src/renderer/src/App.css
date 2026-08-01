@@ -283,6 +283,21 @@ button.secondary:disabled {
   flex-shrink: 0;
 }
 
+.app-icon.default {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--text-dim);
+  border: 1px dashed var(--border);
+  border-radius: 6px;
+  box-sizing: border-box;
+}
+
+.app-icon.default svg {
+  width: 14px;
+  height: 14px;
+}
+
 .workflow-progress {
   display: flex;
   flex-direction: column;

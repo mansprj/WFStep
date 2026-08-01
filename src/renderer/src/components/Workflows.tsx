@@ -17,18 +17,56 @@ interface StepRow {
   value: string
 }
 
+function WorkflowIcon({ path }: { path: string | null }) {
+  const [src, setSrc] = useState<string | null>(null)
+
+  useEffect(() => {
+    if (path === null) {
+      return
+    }
+    let cancelled = false
+    void window.api.icons.get(path).then((dataUrl) => {
+      if (!cancelled) {
+        setSrc(dataUrl)
+      }
+    })
+    return () => {
+      cancelled = true
+    }
+  }, [path])
+
+  if (src === null) {
+    return (
+      <span className="app-icon default" title="No icon">
+        <svg viewBox="0 0 16 16" fill="none">
+          <circle cx="8" cy="8" r="3" stroke="currentColor" strokeWidth="1.4" />
+          <path
+            d="M8 1.5v1.5M8 13v1.5M1.5 8H3M13 8h1.5M3.2 3.2L4.3 4.3M11.7 11.7l1.1 1.1M12.8 3.2l-1.1 1.1M4.3 11.7l-1.1 1.1"
+            stroke="currentColor"
+            strokeWidth="1.4"
+            strokeLinecap="round"
+          />
+        </svg>
+      </span>
+    )
+  }
+  return <img className="app-icon" src={src} alt="" />
+}
+
 interface WorkflowEditorProps {
   initialName?: string
   initialSteps?: StepRow[]
+  initialIcon?: string | null
   submitLabel: string
   busy: boolean
   onCancel?: () => void
-  onSubmit: (name: string, steps: StepRow[]) => Promise<boolean>
+  onSubmit: (name: string, steps: StepRow[], iconPath: string | null) => Promise<boolean>
 }
 
 function WorkflowEditor({
   initialName = '',
   initialSteps = [],
+  initialIcon = null,
   submitLabel,
   busy,
   onCancel,
@@ -36,6 +74,7 @@ function WorkflowEditor({
 }: WorkflowEditorProps) {
   const [name, setName] = useState(initialName)
   const [steps, setSteps] = useState<StepRow[]>(initialSteps)
+  const [iconPath, setIconPath] = useState<string | null>(initialIcon)
 
   const updateStep = (index: number, patch: Partial<StepRow>): void => {
     setSteps((current) =>
@@ -58,10 +97,18 @@ function WorkflowEditor({
     }
   }
 
+  const chooseIcon = async (): Promise<void> => {
+    const path = await window.api.dialogs.selectImage()
+    if (path !== null) {
+      setIconPath(path)
+    }
+  }
+
   const submit = async (): Promise<void> => {
-    if (await onSubmit(name, steps)) {
+    if (await onSubmit(name, steps, iconPath)) {
       setName('')
       setSteps([])
+      setIconPath(null)
     }
   }
 
@@ -76,6 +123,27 @@ function WorkflowEditor({
         onChange={(event) => setName(event.target.value)}
         disabled={busy}
       />
+
+      <label htmlFor="workflow-icon">Icon (optional)</label>
+      <div className="input-row">
+        <WorkflowIcon key={iconPath ?? 'none'} path={iconPath} />
+        <input
+          id="workflow-icon"
+          type="text"
+          placeholder="Path to image"
+          value={iconPath ?? ''}
+          onChange={(event) => setIconPath(event.target.value)}
+          disabled={busy}
+        />
+        <button type="button" onClick={chooseIcon} disabled={busy}>
+          Choose…
+        </button>
+        {iconPath !== null && (
+          <button type="button" onClick={() => setIconPath(null)} disabled={busy}>
+            Clear
+          </button>
+        )}
+      </div>
 
       <ul className="workflow-steps">
         {steps.map((step, index) => (
@@ -196,6 +264,7 @@ function Workflows() {
     id: string | null,
     name: string,
     steps: StepRow[],
+    iconPath: string | null,
   ): Promise<boolean> => {
     const actions = steps
       .filter((step) => step.value.trim().length > 0)
@@ -204,8 +273,8 @@ function Workflows() {
     setBusy(true)
     const outcome =
       id === null
-        ? await window.api.workflows.add({ name, actions })
-        : await window.api.workflows.update(id, { name, actions })
+        ? await window.api.workflows.add({ name, actions, iconPath })
+        : await window.api.workflows.update(id, { name, actions, iconPath })
     setBusy(false)
     report(outcome)
     if (outcome.success) {
@@ -265,7 +334,10 @@ function Workflows() {
           {workflows.map((workflow) => (
             <li key={workflow.id} className="app-item">
               <div className="app-info">
-                <span className="app-name">{workflow.name}</span>
+                <span className="app-name-row">
+                  <WorkflowIcon key={workflow.iconPath ?? 'none'} path={workflow.iconPath} />
+                  <span className="app-name">{workflow.name}</span>
+                </span>
                 <ol className="workflow-summary">
                   {workflow.actions.map((action, index) => (
                     <li key={index} className="workflow-summary-step">
@@ -312,6 +384,7 @@ function Workflows() {
       {creating || editing !== null ? (
         <WorkflowEditor
           initialName={editing?.name}
+          initialIcon={editing?.iconPath ?? null}
           initialSteps={
             editing?.actions.map((action) => inputFromAction(action)) ?? []
           }
@@ -321,7 +394,9 @@ function Workflows() {
             setCreating(false)
             setEditing(null)
           }}
-          onSubmit={(name, steps) => save(editing?.id ?? null, name, steps)}
+          onSubmit={(name, steps, iconPath) =>
+            save(editing?.id ?? null, name, steps, iconPath)
+          }
         />
       ) : (
         <button

@@ -1,7 +1,8 @@
 import { app, ipcMain } from 'electron'
-import { existsSync } from 'node:fs'
+import { existsSync, readFileSync } from 'node:fs'
+import { extname } from 'node:path'
+import { selectExecutable, selectImage } from './dialogs'
 import { addApp, listApps, removeApp, updateApp } from './appsManager'
-import { selectExecutable } from './dialogs'
 import {
   getProcessStatus,
   killProcess,
@@ -20,6 +21,16 @@ import {
 import { cancelWorkflowRun, startWorkflowRun } from './workflowRunner'
 import { isAutomationAction } from '@shared/actions'
 import type { ActionResult } from '@shared/types'
+
+const IMAGE_EXTENSIONS: Record<string, string> = {
+  '.png': 'image/png',
+  '.jpg': 'image/jpeg',
+  '.jpeg': 'image/jpeg',
+  '.gif': 'image/gif',
+  '.webp': 'image/webp',
+  '.bmp': 'image/bmp',
+  '.ico': 'image/x-icon',
+}
 
 export function registerIpcHandlers(): void {
   ipcMain.handle('process:status', (_event, processName: string) =>
@@ -41,13 +52,23 @@ export function registerIpcHandlers(): void {
     launchProcess(exePath),
   )
   ipcMain.handle('dialog:selectExecutable', () => selectExecutable())
-  ipcMain.handle('icon:get', async (_event, exePath: unknown) => {
-    if (typeof exePath !== 'string' || exePath.trim().length === 0) {
+  ipcMain.handle('dialog:selectImage', () => selectImage())
+  ipcMain.handle('icon:get', async (_event, filePath: unknown) => {
+    if (typeof filePath !== 'string' || filePath.trim().length === 0) {
       return null
     }
-    const path = exePath.trim()
+    const path = filePath.trim()
     if (!existsSync(path)) {
       return null
+    }
+    const mime = IMAGE_EXTENSIONS[extname(path).toLowerCase()]
+    if (mime !== undefined) {
+      try {
+        const data = readFileSync(path)
+        return `data:${mime};base64,${data.toString('base64')}`
+      } catch {
+        return null
+      }
     }
     try {
       const image = await app.getFileIcon(path, { size: 'large' })

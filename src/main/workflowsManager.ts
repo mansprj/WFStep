@@ -40,7 +40,11 @@ function sanitizeInput(value: unknown): WorkflowInput | null {
   if (!isValidWorkflowInput(value)) {
     return null
   }
-  return { name: value.name.trim(), actions: value.actions }
+  let iconPath: string | null = value.iconPath?.trim() ?? null
+  if (iconPath !== null && iconPath.length === 0) {
+    iconPath = null
+  }
+  return { name: value.name.trim(), actions: value.actions, iconPath }
 }
 
 export function listWorkflows(): Workflow[] {

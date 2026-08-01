@@ -21,6 +21,7 @@ declare global {
       }
       dialogs: {
         selectExecutable: () => Promise<string | null>
+        selectImage: () => Promise<string | null>
       }
       icons: {
         get: (path: string) => Promise<string | null>

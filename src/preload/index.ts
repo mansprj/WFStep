@@ -14,6 +14,7 @@ const api = {
   },
   dialogs: {
     selectExecutable: () => ipcRenderer.invoke('dialog:selectExecutable'),
+    selectImage: () => ipcRenderer.invoke('dialog:selectImage'),
   },
   icons: {
     get: (path: string) => ipcRenderer.invoke('icon:get', path),
