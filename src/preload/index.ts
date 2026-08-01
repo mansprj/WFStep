@@ -1,5 +1,6 @@
 import { contextBridge, ipcRenderer } from 'electron'
 import type { AutomationAction } from '@shared/actions'
+import type { AppInput } from '@shared/apps'
 
 const api = {
   process: {
@@ -13,6 +14,13 @@ const api = {
   },
   actions: {
     run: (action: AutomationAction) => ipcRenderer.invoke('action:run', action),
+  },
+  apps: {
+    list: () => ipcRenderer.invoke('apps:list'),
+    add: (input: AppInput) => ipcRenderer.invoke('apps:add', input),
+    update: (id: string, input: AppInput) =>
+      ipcRenderer.invoke('apps:update', id, input),
+    remove: (id: string) => ipcRenderer.invoke('apps:remove', id),
   },
 }
 

@@ -1,4 +1,5 @@
 import type { AutomationAction } from '@shared/actions'
+import type { AppEntry, AppInput, AppMutationResult } from '@shared/apps'
 import type { ActionResult, ProcessStatus } from '@shared/types'
 
 declare global {
@@ -15,6 +16,12 @@ declare global {
       }
       actions: {
         run: (action: AutomationAction) => Promise<ActionResult>
+      }
+      apps: {
+        list: () => Promise<AppEntry[]>
+        add: (input: AppInput) => Promise<AppMutationResult>
+        update: (id: string, input: AppInput) => Promise<AppMutationResult>
+        remove: (id: string) => Promise<AppMutationResult>
       }
     }
   }

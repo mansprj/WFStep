@@ -64,6 +64,75 @@
   font-size: 12px;
 }
 
+.app-list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.app-item {
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  padding: 10px;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.app-info {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.app-name {
+  font-weight: 600;
+}
+
+.app-detail {
+  color: var(--text-dim);
+  font-size: 12px;
+  word-break: break-all;
+}
+
+.app-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+}
+
+.app-actions button {
+  font: inherit;
+  font-weight: 600;
+  color: var(--text);
+  background: var(--bg);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  padding: 6px 12px;
+  cursor: pointer;
+}
+
+.app-actions button:hover {
+  border-color: var(--accent);
+  color: var(--accent);
+}
+
+.app-actions button:disabled {
+  opacity: 0.6;
+  cursor: default;
+}
+
+.app-form {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  border-top: 1px solid var(--border);
+  padding-top: 12px;
+}
+
 .field input {
   font: inherit;
   color: var(--text);

@@ -6,7 +6,7 @@ import type { ActionResult, ProcessStatus } from '@shared/types'
 const execFileAsync = promisify(execFile)
 
 // Windows process names are limited to these characters.
-const PROCESS_NAME_PATTERN = /^[A-Za-z0-9_.-]+$/
+export const PROCESS_NAME_PATTERN = /^[A-Za-z0-9_.-]+$/
 
 function invalidNameResult(value: unknown): ActionResult | null {
   if (typeof value !== 'string' || !PROCESS_NAME_PATTERN.test(value)) {

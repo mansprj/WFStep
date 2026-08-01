@@ -1,4 +1,5 @@
 import { ipcMain } from 'electron'
+import { addApp, listApps, removeApp, updateApp } from './appsManager'
 import { selectExecutable } from './dialogs'
 import {
   getProcessStatus,
@@ -30,4 +31,10 @@ export function registerIpcHandlers(): void {
     }
     return executeAction(value)
   })
+  ipcMain.handle('apps:list', () => listApps())
+  ipcMain.handle('apps:add', (_event, value: unknown) => addApp(value))
+  ipcMain.handle('apps:update', (_event, id: unknown, value: unknown) =>
+    updateApp(id, value),
+  )
+  ipcMain.handle('apps:remove', (_event, id: unknown) => removeApp(id))
 }
