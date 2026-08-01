@@ -2,7 +2,7 @@
 
 ## Project Status
 
-Current stage: Phase 4 (Workflow Engine) complete. The app manages a persistent applications library (launch/restart/stop by path, saved on disk), reusable automation actions, and workflows that combine actions into sequences with step-by-step progress and cancellation.
+Current stage: Phase 5 (Global Hotkeys) complete. Workflows can be assigned a global hotkey (recorded in the editor), the app runs in the system tray (close hides instead of quitting, Quit is in the tray menu), and hotkeys run workflows from anywhere via globalShortcut. Progress events broadcast to all windows. Conflict/invalid shortcuts are reported on save.
 
 Git repository is initialized and pushed to GitHub (mansprj/AutomationHub). Changes are committed and pushed after each task.
 
@@ -77,17 +77,19 @@ Completed
 - Phase 3: Automation Actions (shared AutomationAction type with runtime guard, executor in main, action:run channel, renderer ActionRunner panel, @shared alias)
 - Applications library (persistent apps.json in userData, CRUD via apps:* channels; restart/stop kill by executable image name so they do not depend on a hand-typed process name)
 - Phase 4: Workflow Engine (shared Workflow type, workflows.json persistence, sequential workflowRunner with workflow:progress events and cancellation, Workflows panel with step editor)
+- Phase 5: Global Hotkeys (hotkey field on Workflow, hotkeyManager on globalShortcut, workflowRunner broadcasts to all windows, tray + close-to-tray, hotkey recorder field and list badge)
 
 Project structure
 
-- src/main — Electron main process (window, IPC, process management)
+- src/main — Electron main process (window, tray, IPC, process management, hotkey manager)
 - src/preload — contextBridge API exposed to the renderer
 - src/renderer — React UI (Vite)
 - src/shared — types shared between main and renderer
+- resources — app assets (tray icon)
 
 Pending
 
-- Phase 5: Global Hotkeys (run workflows without opening the app)
+- Phase 6: Profiles
 
 ---
 

@@ -80,6 +80,78 @@
   font-size: 12px;
 }
 
+.hotkey-badge {
+  display: inline-block;
+  font-size: 11px;
+  font-weight: 600;
+  font-family: ui-monospace, SFMono-Regular, Consolas, monospace;
+  color: var(--accent);
+  border: 1px solid var(--accent);
+  border-radius: 999px;
+  padding: 1px 8px;
+  vertical-align: middle;
+}
+
+.hotkey-field {
+  font: inherit;
+  font-family: ui-monospace, SFMono-Regular, Consolas, monospace;
+  text-align: left;
+  color: var(--text);
+  background: var(--bg);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  padding: 10px 12px;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  min-height: 40px;
+}
+
+.hotkey-field:focus,
+.hotkey-field.recording {
+  outline: none;
+  border-color: var(--accent);
+}
+
+.hotkey-field.recording {
+  box-shadow: 0 0 0 2px color-mix(in srgb, var(--accent) 25%, transparent);
+}
+
+.hotkey-field:disabled {
+  cursor: default;
+  opacity: 0.6;
+}
+
+.hotkey-recording {
+  color: var(--accent);
+  font-weight: 600;
+}
+
+.hotkey-keys {
+  color: var(--text);
+}
+
+.hotkey-clear {
+  color: var(--text-dim);
+  cursor: pointer;
+  font-size: 14px;
+  line-height: 1;
+  padding: 0 4px;
+  user-select: none;
+}
+
+.hotkey-clear:hover {
+  color: var(--text);
+}
+
+.hotkey-hint {
+  margin: 0;
+  color: var(--text-dim);
+  font-size: 12px;
+}
+
 .app-list {
   list-style: none;
   margin: 0;

@@ -44,7 +44,11 @@ function sanitizeInput(value: unknown): WorkflowInput | null {
   if (iconPath !== null && iconPath.length === 0) {
     iconPath = null
   }
-  return { name: value.name.trim(), actions: value.actions, iconPath }
+  let hotkey: string | null = value.hotkey?.trim() ?? null
+  if (hotkey !== null && hotkey.length === 0) {
+    hotkey = null
+  }
+  return { name: value.name.trim(), actions: value.actions, iconPath, hotkey }
 }
 
 export function listWorkflows(): Workflow[] {

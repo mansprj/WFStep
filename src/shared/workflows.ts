@@ -6,12 +6,14 @@ export interface Workflow {
   name: string
   actions: AutomationAction[]
   iconPath: string | null
+  hotkey: string | null
 }
 
 export interface WorkflowInput {
   name: string
   actions: AutomationAction[]
   iconPath: string | null
+  hotkey: string | null
 }
 
 export type WorkflowMutationResult =
@@ -46,6 +48,9 @@ export function isValidWorkflowInput(value: unknown): value is WorkflowInput {
     return false
   }
   if (record.iconPath !== null && typeof record.iconPath !== 'string') {
+    return false
+  }
+  if (record.hotkey !== null && typeof record.hotkey !== 'string') {
     return false
   }
   return record.actions.every(isAutomationAction)

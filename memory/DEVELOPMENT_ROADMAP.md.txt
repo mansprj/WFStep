@@ -94,9 +94,23 @@ Global Hotkeys
 
 Features
 
-- Register shortcuts
-- Execute workflow
-- Enable/disable hotkeys
+- [x] Assign a hotkey to any workflow (recorded in the editor, persisted on disk)
+- [x] Run workflows from anywhere via globalShortcut
+- [x] Validation of shortcuts (conflicts with the system/other workflows are reported on save)
+- [x] Tray integration: app keeps running in the background, close = hide to tray, Quit from tray menu
+
+Implementation
+
+- [x] `hotkey` field on the shared Workflow type + validator (src/shared/workflows.ts)
+- [x] Hotkey manager in main using globalShortcut (src/main/hotkeyManager.ts), re-registered on workflow add/update/remove
+- [x] workflowRunner now broadcasts progress to all windows instead of the invoking sender (hotkey runs work without a renderer event)
+- [x] Tray icon (resources/tray.png) + close-to-tray behaviour (src/main/index.ts)
+- [x] Renderer: hotkey recorder field (Ctrl/Alt required) + hotkey badge in the workflow list
+
+Notes
+
+- Enable/disable a hotkey by assigning or clearing it on the workflow (no separate global toggle yet).
+- A hotkey only works while the app runs in the tray; quitting is done via the tray menu.
 
 Goal
 

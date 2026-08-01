@@ -19,6 +19,7 @@ import {
   updateWorkflow,
 } from './workflowsManager'
 import { cancelWorkflowRun, startWorkflowRun } from './workflowRunner'
+import { hotkeyIssue, refreshHotkeys } from './hotkeyManager'
 import { isAutomationAction } from '@shared/actions'
 import type { ActionResult } from '@shared/types'
 
@@ -90,12 +91,42 @@ export function registerIpcHandlers(): void {
   )
   ipcMain.handle('apps:remove', (_event, id: unknown) => removeApp(id))
   ipcMain.handle('workflows:list', () => listWorkflows())
-  ipcMain.handle('workflows:add', (_event, value: unknown) => addWorkflow(value))
-  ipcMain.handle('workflows:update', (_event, id: unknown, value: unknown) =>
-    updateWorkflow(id, value),
-  )
-  ipcMain.handle('workflows:remove', (_event, id: unknown) => removeWorkflow(id))
-  ipcMain.handle('workflows:run', (event, id: unknown) => {
+  ipcMain.handle('workflows:add', (_event, value: unknown) => {
+    const result = addWorkflow(value)
+    if (result.success) {
+      refreshHotkeys()
+      const issue =
+        result.workflow?.hotkey !== null && result.workflow !== undefined
+          ? hotkeyIssue(result.workflow.id)
+          : null
+      if (issue !== null) {
+        return { ...result, message: `${result.message} ${issue}` }
+      }
+    }
+    return result
+  })
+  ipcMain.handle('workflows:update', (_event, id: unknown, value: unknown) => {
+    const result = updateWorkflow(id, value)
+    if (result.success) {
+      refreshHotkeys()
+      const issue =
+        result.workflow?.hotkey !== null && result.workflow !== undefined
+          ? hotkeyIssue(result.workflow.id)
+          : null
+      if (issue !== null) {
+        return { ...result, message: `${result.message} ${issue}` }
+      }
+    }
+    return result
+  })
+  ipcMain.handle('workflows:remove', (_event, id: unknown) => {
+    const result = removeWorkflow(id)
+    if (result.success) {
+      refreshHotkeys()
+    }
+    return result
+  })
+  ipcMain.handle('workflows:run', (_event, id: unknown) => {
     if (typeof id !== 'string') {
       return { success: false, message: 'Invalid workflow id.' }
     }
@@ -103,7 +134,7 @@ export function registerIpcHandlers(): void {
     if (workflow === undefined) {
       return { success: false, message: 'Workflow not found.' }
     }
-    return startWorkflowRun(event, workflow)
+    return startWorkflowRun(workflow)
   })
   ipcMain.handle('workflows:cancel', () => {
     if (cancelWorkflowRun()) {

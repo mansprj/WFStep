@@ -9,12 +9,13 @@ AutomationHub is a Windows desktop application for automating repetitive desktop
 - Applications library: save apps (by path and/or process name), persisted on disk, launch/restart/stop/edit/delete anytime
 - Automation actions: start/stop/restart app, delay, shell command, open URL, open folder
 - Workflows: combine actions into sequences, run step by step with progress and cancellation, persisted on disk
+- Global hotkeys: assign a shortcut to any workflow and run it from anywhere; the app stays in the system tray (close hides, Quit lives in the tray menu)
 
 ## Roadmap
 
-- Global hotkeys
 - User profiles
 - Plugin system
+- Release
 
 ## Tech Stack
 
@@ -65,12 +66,13 @@ npm start
 
 ```
 src/
-├── main/        # Electron main process (window, IPC, process/app/workflow management, action executor)
+├── main/        # Electron main process (window, tray, IPC, process/app/workflow management, hotkey manager)
 ├── preload/     # contextBridge API exposed to the renderer
 ├── renderer/    # React UI (Vite)
 │   ├── public/
 │   └── src/
-└── shared/      # types and action/workflow definitions shared between main and renderer
+├── shared/      # types and action/workflow definitions shared between main and renderer
+resources/       # app assets (tray icon)
 ```
 
 ## Architecture

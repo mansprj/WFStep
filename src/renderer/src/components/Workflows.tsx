@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import { describeActionShort } from '@shared/actions'
 import type { Workflow } from '@shared/workflows'
 import {
@@ -15,6 +15,126 @@ import ResultStatus from './ResultStatus'
 interface StepRow {
   kind: ActionKind
   value: string
+}
+
+const NAMED_KEYS: Record<string, string> = {
+  ' ': 'Space',
+  Enter: 'Enter',
+  Escape: 'Esc',
+  Tab: 'Tab',
+  Backspace: 'Backspace',
+  Delete: 'Delete',
+  Insert: 'Insert',
+  Home: 'Home',
+  End: 'End',
+  PageUp: 'PageUp',
+  PageDown: 'PageDown',
+  ArrowUp: 'Up',
+  ArrowDown: 'Down',
+  ArrowLeft: 'Left',
+  ArrowRight: 'Right',
+}
+
+function eventToAccelerator(event: React.KeyboardEvent): string | null {
+  const modifiers: string[] = []
+  if (event.ctrlKey) modifiers.push('Ctrl')
+  if (event.altKey) modifiers.push('Alt')
+  if (event.shiftKey) modifiers.push('Shift')
+  if (modifiers.length === 0) {
+    return null
+  }
+
+  const key = event.key
+  if (key === 'Control' || key === 'Alt' || key === 'Shift' || key === 'Meta') {
+    return null
+  }
+  if (/^[a-z0-9]$/i.test(key)) {
+    return [...modifiers, key.toUpperCase()].join('+')
+  }
+  if (/^F([1-9]|1\d|2[0-4])$/.test(key)) {
+    return [...modifiers, key].join('+')
+  }
+  const mapped = NAMED_KEYS[key]
+  return mapped === undefined ? null : [...modifiers, mapped].join('+')
+}
+
+function HotkeyField({
+  value,
+  onChange,
+  disabled,
+}: {
+  value: string | null
+  onChange: (value: string | null) => void
+  disabled: boolean
+}) {
+  const [recording, setRecording] = useState(false)
+  const ref = useRef<HTMLButtonElement>(null)
+
+  useEffect(() => {
+    if (!recording) {
+      return
+    }
+    const el = ref.current
+    if (el === null) {
+      return
+    }
+    const stop = (): void => setRecording(false)
+    el.addEventListener('blur', stop)
+    return () => el.removeEventListener('blur', stop)
+  }, [recording])
+
+  const record = (event: React.KeyboardEvent<HTMLButtonElement>): void => {
+    if (!recording) {
+      return
+    }
+    event.preventDefault()
+    event.stopPropagation()
+    if (event.key === 'Escape') {
+      setRecording(false)
+      return
+    }
+    const accelerator = eventToAccelerator(event)
+    if (accelerator === null) {
+      return
+    }
+    onChange(accelerator)
+    setRecording(false)
+  }
+
+  return (
+    <button
+      ref={ref}
+      type="button"
+      className={`hotkey-field${recording ? ' recording' : ''}`}
+      disabled={disabled}
+      onClick={() => setRecording(true)}
+      onKeyDown={record}
+      title={
+        recording
+          ? 'Press the combination (Ctrl or Alt required)'
+          : 'Click, then press the combination'
+      }
+    >
+      {recording ? (
+        <span className="hotkey-recording">Press keys…</span>
+      ) : (
+        <span className="hotkey-keys">{value ?? 'None'}</span>
+      )}
+      {!recording && value !== null && (
+        <span
+          className="hotkey-clear"
+          role="button"
+          tabIndex={-1}
+          onClick={(event) => {
+            event.stopPropagation()
+            onChange(null)
+          }}
+        >
+          ×
+        </span>
+      )}
+    </button>
+  )
 }
 
 function WorkflowIcon({ path }: { path: string | null }) {
@@ -57,16 +177,23 @@ interface WorkflowEditorProps {
   initialName?: string
   initialSteps?: StepRow[]
   initialIcon?: string | null
+  initialHotkey?: string | null
   submitLabel: string
   busy: boolean
   onCancel?: () => void
-  onSubmit: (name: string, steps: StepRow[], iconPath: string | null) => Promise<boolean>
+  onSubmit: (
+    name: string,
+    steps: StepRow[],
+    iconPath: string | null,
+    hotkey: string | null,
+  ) => Promise<boolean>
 }
 
 function WorkflowEditor({
   initialName = '',
   initialSteps = [],
   initialIcon = null,
+  initialHotkey = null,
   submitLabel,
   busy,
   onCancel,
@@ -75,6 +202,7 @@ function WorkflowEditor({
   const [name, setName] = useState(initialName)
   const [steps, setSteps] = useState<StepRow[]>(initialSteps)
   const [iconPath, setIconPath] = useState<string | null>(initialIcon)
+  const [hotkey, setHotkey] = useState<string | null>(initialHotkey)
 
   const updateStep = (index: number, patch: Partial<StepRow>): void => {
     setSteps((current) =>
@@ -105,10 +233,11 @@ function WorkflowEditor({
   }
 
   const submit = async (): Promise<void> => {
-    if (await onSubmit(name, steps, iconPath)) {
+    if (await onSubmit(name, steps, iconPath, hotkey)) {
       setName('')
       setSteps([])
       setIconPath(null)
+      setHotkey(null)
     }
   }
 
@@ -144,6 +273,13 @@ function WorkflowEditor({
           </button>
         )}
       </div>
+
+      <label htmlFor="workflow-hotkey">Hotkey (optional)</label>
+      <HotkeyField value={hotkey} onChange={setHotkey} disabled={busy} />
+      <p className="hotkey-hint">
+        Run this workflow from any app. The shortcut only works while
+        AutomationHub runs in the tray.
+      </p>
 
       <ul className="workflow-steps">
         {steps.map((step, index) => (
@@ -265,6 +401,7 @@ function Workflows() {
     name: string,
     steps: StepRow[],
     iconPath: string | null,
+    hotkey: string | null,
   ): Promise<boolean> => {
     const actions = steps
       .filter((step) => step.value.trim().length > 0)
@@ -273,8 +410,13 @@ function Workflows() {
     setBusy(true)
     const outcome =
       id === null
-        ? await window.api.workflows.add({ name, actions, iconPath })
-        : await window.api.workflows.update(id, { name, actions, iconPath })
+        ? await window.api.workflows.add({ name, actions, iconPath, hotkey })
+        : await window.api.workflows.update(id, {
+            name,
+            actions,
+            iconPath,
+            hotkey,
+          })
     setBusy(false)
     report(outcome)
     if (outcome.success) {
@@ -337,6 +479,9 @@ function Workflows() {
                 <span className="app-name-row">
                   <WorkflowIcon key={workflow.iconPath ?? 'none'} path={workflow.iconPath} />
                   <span className="app-name">{workflow.name}</span>
+                  {workflow.hotkey !== null && (
+                    <span className="hotkey-badge">{workflow.hotkey}</span>
+                  )}
                 </span>
                 <ol className="workflow-summary">
                   {workflow.actions.map((action, index) => (
@@ -385,6 +530,7 @@ function Workflows() {
         <WorkflowEditor
           initialName={editing?.name}
           initialIcon={editing?.iconPath ?? null}
+          initialHotkey={editing?.hotkey ?? null}
           initialSteps={
             editing?.actions.map((action) => inputFromAction(action)) ?? []
           }
@@ -394,8 +540,8 @@ function Workflows() {
             setCreating(false)
             setEditing(null)
           }}
-          onSubmit={(name, steps, iconPath) =>
-            save(editing?.id ?? null, name, steps, iconPath)
+          onSubmit={(name, steps, iconPath, hotkey) =>
+            save(editing?.id ?? null, name, steps, iconPath, hotkey)
           }
         />
       ) : (

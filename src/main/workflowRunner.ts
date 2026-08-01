@@ -1,4 +1,4 @@
-import type { IpcMainInvokeEvent } from 'electron'
+import { BrowserWindow } from 'electron'
 import { executeAction } from './actions/executor'
 import { describeAction } from '@shared/actions'
 import type { Workflow, WorkflowProgress } from '@shared/workflows'
@@ -19,7 +19,6 @@ export function cancelWorkflowRun(): boolean {
 }
 
 export async function startWorkflowRun(
-  event: IpcMainInvokeEvent,
   workflow: Workflow,
 ): Promise<{ success: boolean; message: string }> {
   if (runningId !== null) {
@@ -30,7 +29,9 @@ export async function startWorkflowRun(
   cancelRequested = false
 
   const send = (payload: WorkflowProgress): void => {
-    event.sender.send('workflow:progress', payload)
+    for (const window of BrowserWindow.getAllWindows()) {
+      window.webContents.send('workflow:progress', payload)
+    }
   }
   const progress = (
     stepIndex: number,
