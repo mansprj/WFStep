@@ -1,0 +1,124 @@
+# AutomationHub
+
+## Project Status
+
+Current stage: Electron integrated with Vite. The first feature (Restart Discord) is implemented and ready for UI verification.
+
+## Goal
+
+AutomationHub is a Windows desktop application that allows users to automate repetitive desktop actions through a clean graphical interface.
+
+The application should eventually support:
+
+- Launch applications
+- Close applications
+- Restart applications
+- Execute command sequences
+- Global hotkeys
+- Macros
+- User profiles
+- Startup automation
+- Plugin system
+- Custom workflows
+
+The project should prioritize maintainability and scalability over fast feature implementation.
+
+---
+
+## Current Tech Stack
+
+Frontend
+- React
+- Vite
+- TypeScript (preferred)
+
+Desktop
+- Electron
+- electron-vite (build tool, dev server + main/preload build + HMR)
+
+Runtime
+- Node.js
+
+Package Manager
+- npm
+
+Version Control
+- Git
+- GitHub
+
+Development Environment
+- Windows
+- PowerShell
+
+---
+
+## Current Progress
+
+Completed
+
+- Git installed
+- Node.js installed
+- npm installed
+- GitHub configured
+- OpenCode installed
+- PATH configured
+- Vite project created successfully
+- Project launches correctly
+- Electron installed
+- Electron + Vite integration via electron-vite (dev, build, preview)
+- Electron Main Process created
+- Preload Script created
+- IPC configured (discord:restart)
+- First desktop window launches
+
+Project structure
+
+- src/main — Electron main process (window, IPC, process management)
+- src/preload — contextBridge API exposed to the renderer
+- src/renderer — React UI (Vite)
+- src/shared — types shared between main and renderer
+
+Pending
+
+- Verify Restart Discord flow from the UI (npm run dev, click the button)
+- Phase 2: Process Management (find/kill/restart/launch/status)
+
+---
+
+## First Functional Goal
+
+Implement a working desktop application capable of restarting Discord.
+
+Expected flow:
+
+User presses button
+
+↓
+
+Electron receives request
+
+↓
+
+Discord process terminates
+
+↓
+
+Discord launches again
+
+↓
+
+UI displays success message
+
+This feature validates the complete application architecture.
+
+---
+
+## Long-Term Vision
+
+AutomationHub should evolve into a desktop automation platform rather than a collection of scripts.
+
+Every feature should be modular.
+
+Every system should be replaceable.
+
+Architecture must remain clean from the beginning.

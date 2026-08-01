@@ -1,0 +1,144 @@
+# AutomationHub Roadmap
+
+## Phase 1
+
+Foundation
+
+- [x] Electron installation
+- [x] Electron + Vite integration (electron-vite)
+- [x] Main process
+- [x] Preload
+- [x] IPC communication
+- [x] Desktop window
+
+Goal
+
+Desktop application launches successfully.
+
+---
+
+## Phase 2
+
+Process Management
+
+Features
+
+- Find running processes
+- Kill process
+- Restart process
+- Launch executable
+- Process status
+
+Goal
+
+Application controls Windows processes.
+
+---
+
+## Phase 3
+
+Automation Actions
+
+Supported actions
+
+- Start application
+- Stop application
+- Restart application
+- Delay
+- Execute shell command
+- Open URL
+- Open folder
+
+Goal
+
+Build reusable automation blocks.
+
+---
+
+## Phase 4
+
+Workflow Engine
+
+Users can combine actions into sequences.
+
+Example
+
+Restart Discord
+
+↓
+
+Wait 2 seconds
+
+↓
+
+Launch Steam
+
+↓
+
+Open Spotify
+
+↓
+
+Display notification
+
+Goal
+
+Automation becomes visual.
+
+---
+
+## Phase 5
+
+Global Hotkeys
+
+Features
+
+- Register shortcuts
+- Execute workflow
+- Enable/disable hotkeys
+
+Goal
+
+Automation without opening the application.
+
+---
+
+## Phase 6
+
+Profiles
+
+Features
+
+- Save settings
+- Multiple configurations
+- Import/export
+
+---
+
+## Phase 7
+
+Plugins
+
+External plugins
+
+Plugin API
+
+Plugin Marketplace (future)
+
+---
+
+## Phase 8
+
+Release
+
+Installer
+
+Auto Update
+
+Settings
+
+Logs
+
+Documentation
+
+Stable Release

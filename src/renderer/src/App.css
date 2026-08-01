@@ -1,0 +1,54 @@
+.app {
+  min-height: 100svh;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 16px;
+  padding: 24px;
+  box-sizing: border-box;
+}
+
+.app h1 {
+  font-size: 40px;
+  font-weight: 600;
+  letter-spacing: -1px;
+}
+
+.subtitle {
+  color: var(--text-dim);
+  margin-bottom: 24px;
+}
+
+.restart-button {
+  font: inherit;
+  font-weight: 600;
+  color: #16171d;
+  background: var(--accent);
+  border: none;
+  border-radius: 8px;
+  padding: 12px 24px;
+  cursor: pointer;
+}
+
+.restart-button:disabled {
+  opacity: 0.6;
+  cursor: default;
+}
+
+.status {
+  padding: 8px 16px;
+  border-radius: 8px;
+  background: var(--card-bg);
+  border: 1px solid var(--border);
+}
+
+.status.success {
+  color: var(--success);
+  border-color: var(--success);
+}
+
+.status.error {
+  color: var(--error);
+  border-color: var(--error);
+}

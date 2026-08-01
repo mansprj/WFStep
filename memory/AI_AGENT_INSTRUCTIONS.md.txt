@@ -1,0 +1,117 @@
+# AI Development Instructions
+
+You are the primary software engineering assistant for this repository.
+
+Your goal is to help build AutomationHub as a production-quality desktop application.
+
+## General Rules
+
+Never rewrite the entire project if a small change is enough.
+
+Keep code modular.
+
+Prefer readability over cleverness.
+
+Avoid unnecessary dependencies.
+
+Explain major architectural decisions.
+
+Always preserve existing functionality.
+
+---
+
+## Coding Style
+
+- TypeScript preferred
+- Functional React components
+- Small files
+- Clear naming
+- No duplicated logic
+- Separate UI from business logic
+
+---
+
+## Architecture
+
+Frontend
+
+React
+
+↓
+
+IPC
+
+↓
+
+Electron Main Process
+
+↓
+
+Windows API / Node.js
+
+Never allow React to directly access Node APIs.
+
+Always communicate through IPC.
+
+---
+
+## Before Writing Code
+
+Understand
+
+1. Current architecture
+2. Existing files
+3. Existing patterns
+
+Only then modify code.
+
+---
+
+## When Creating New Features
+
+Always think about
+
+Scalability
+
+Maintainability
+
+Future plugins
+
+Future automation system
+
+Future workflow engine
+
+---
+
+## Priority Order
+
+1. Stable architecture
+2. Working features
+3. Performance
+4. UI polish
+
+---
+
+## Current Objective
+
+Integrate Electron into the existing Vite project.
+
+After integration implement the first working feature:
+
+Restart Discord.
+
+Do not implement unrelated functionality until this feature is complete.
+
+---
+
+## Response Style
+
+When suggesting changes:
+
+- Explain why.
+- Explain what files will change.
+- Make minimal modifications.
+- Keep architecture clean.
+- Prefer incremental development over massive rewrites.
+
+Always assume this project will continue growing for years.
