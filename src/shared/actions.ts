@@ -61,3 +61,27 @@ export function describeAction(action: AutomationAction): string {
       return `Open folder: ${action.path}`
   }
 }
+
+function baseName(path: string): string {
+  return path.split(/[\\/]/).pop() ?? path
+}
+
+// Compact label for lists: keeps the key detail, drops the full path.
+export function describeActionShort(action: AutomationAction): string {
+  switch (action.type) {
+    case 'start':
+      return `Start ${baseName(action.executablePath)}`
+    case 'stop':
+      return `Stop ${action.processName}`
+    case 'restart':
+      return `Restart ${action.processName}`
+    case 'delay':
+      return `Wait ${action.ms} ms`
+    case 'shell':
+      return `Run ${action.command}`
+    case 'openUrl':
+      return `Open ${action.url}`
+    case 'openFolder':
+      return `Open ${baseName(action.path)}`
+  }
+}

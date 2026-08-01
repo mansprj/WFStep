@@ -15,6 +15,9 @@ const api = {
   dialogs: {
     selectExecutable: () => ipcRenderer.invoke('dialog:selectExecutable'),
   },
+  icons: {
+    get: (path: string) => ipcRenderer.invoke('icon:get', path),
+  },
   actions: {
     run: (action: AutomationAction) => ipcRenderer.invoke('action:run', action),
   },

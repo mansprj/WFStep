@@ -22,6 +22,9 @@ declare global {
       dialogs: {
         selectExecutable: () => Promise<string | null>
       }
+      icons: {
+        get: (path: string) => Promise<string | null>
+      }
       actions: {
         run: (action: AutomationAction) => Promise<ActionResult>
       }

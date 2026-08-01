@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react'
-import { workflowStepLabel } from '@shared/workflows'
+import { describeActionShort } from '@shared/actions'
 import type { Workflow } from '@shared/workflows'
 import {
   actionFromInput,
@@ -9,6 +9,7 @@ import {
   type ActionKind,
 } from '../actionForm'
 import type { Result } from '../result'
+import ActionIcon from './ActionIcon'
 import ResultStatus from './ResultStatus'
 
 interface StepRow {
@@ -81,6 +82,7 @@ function WorkflowEditor({
           <li key={index} className="workflow-step">
             <div className="workflow-step-head">
               <span className="workflow-step-index">{index + 1}</span>
+              <ActionIcon kind={step.kind} />
               <select
                 value={step.kind}
                 onChange={(event) =>
@@ -267,7 +269,10 @@ function Workflows() {
                 <ol className="workflow-summary">
                   {workflow.actions.map((action, index) => (
                     <li key={index} className="workflow-summary-step">
-                      {index + 1}. {workflowStepLabel(action)}
+                      <ActionIcon kind={action.type} />
+                      <span>
+                        {index + 1}. {describeActionShort(action)}
+                      </span>
                     </li>
                   ))}
                 </ol>

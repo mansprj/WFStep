@@ -1,4 +1,5 @@
-import { ipcMain } from 'electron'
+import { app, ipcMain } from 'electron'
+import { existsSync } from 'node:fs'
 import { addApp, listApps, removeApp, updateApp } from './appsManager'
 import { selectExecutable } from './dialogs'
 import {
@@ -40,6 +41,21 @@ export function registerIpcHandlers(): void {
     launchProcess(exePath),
   )
   ipcMain.handle('dialog:selectExecutable', () => selectExecutable())
+  ipcMain.handle('icon:get', async (_event, exePath: unknown) => {
+    if (typeof exePath !== 'string' || exePath.trim().length === 0) {
+      return null
+    }
+    const path = exePath.trim()
+    if (!existsSync(path)) {
+      return null
+    }
+    try {
+      const image = await app.getFileIcon(path, { size: 'large' })
+      return image.isEmpty() ? null : image.toDataURL()
+    } catch {
+      return null
+    }
+  })
   ipcMain.handle('action:run', (_event, value: unknown) => {
     if (!isAutomationAction(value)) {
       return { success: false, message: 'Invalid action.' } satisfies ActionResult

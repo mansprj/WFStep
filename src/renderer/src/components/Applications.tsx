@@ -93,6 +93,30 @@ function AppForm({
   )
 }
 
+function AppIcon({ path }: { path: string | null }) {
+  const [src, setSrc] = useState<string | null>(null)
+
+  useEffect(() => {
+    if (path === null) {
+      return
+    }
+    let cancelled = false
+    void window.api.icons.get(path).then((dataUrl) => {
+      if (!cancelled) {
+        setSrc(dataUrl)
+      }
+    })
+    return () => {
+      cancelled = true
+    }
+  }, [path])
+
+  if (path === null || src === null) {
+    return null
+  }
+  return <img className="app-icon" src={src} alt="" />
+}
+
 function Applications() {
   const [apps, setApps] = useState<AppEntry[]>([])
   const [busy, setBusy] = useState(false)
@@ -212,7 +236,10 @@ function Applications() {
               ) : (
                 <>
                   <div className="app-info">
-                    <span className="app-name">{app.name}</span>
+                    <span className="app-name-row">
+                      <AppIcon key={app.executablePath ?? 'none'} path={app.executablePath} />
+                      <span className="app-name">{app.name}</span>
+                    </span>
                     {app.executablePath !== null && (
                       <span className="app-detail">{app.executablePath}</span>
                     )}
