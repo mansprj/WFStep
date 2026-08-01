@@ -9,6 +9,9 @@ declare global {
         restart: (name: string) => Promise<ProcessActionResult>
         launch: (path: string) => Promise<ProcessActionResult>
       }
+      dialogs: {
+        selectExecutable: () => Promise<string | null>
+      }
     }
   }
 }

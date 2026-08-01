@@ -1,5 +1,5 @@
 import { execFile, spawn } from 'node:child_process'
-import { existsSync } from 'node:fs'
+import { existsSync, statSync } from 'node:fs'
 import { promisify } from 'node:util'
 import type { ProcessActionResult, ProcessStatus } from '../shared/types'
 
@@ -78,6 +78,12 @@ export async function launchProcess(exePath: string): Promise<ProcessActionResul
   }
   if (!existsSync(path)) {
     return { success: false, message: `File not found: ${path}` }
+  }
+  if (statSync(path).isDirectory()) {
+    return {
+      success: false,
+      message: `${path} is a directory. Specify an executable file.`,
+    }
   }
 
   return new Promise((resolve) => {

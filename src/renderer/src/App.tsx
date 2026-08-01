@@ -48,6 +48,13 @@ function App() {
       : { kind: 'error', message: outcome.message })
   }
 
+  const browse = async (): Promise<void> => {
+    const path = await window.api.dialogs.selectExecutable()
+    if (path !== null) {
+      setExePath(path)
+    }
+  }
+
   const busy = result.kind === 'working'
 
   return (
@@ -88,6 +95,9 @@ function App() {
           disabled={busy}
         />
         <div className="actions">
+          <button type="button" onClick={browse} disabled={busy}>
+            Browse…
+          </button>
           <button type="button" onClick={() => run('launch')} disabled={busy}>
             Launch
           </button>

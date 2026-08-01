@@ -1,4 +1,5 @@
 import { ipcMain } from 'electron'
+import { selectExecutable } from './dialogs'
 import {
   getProcessStatus,
   killProcess,
@@ -19,4 +20,5 @@ export function registerIpcHandlers(): void {
   ipcMain.handle('process:launch', (_event, exePath: string) =>
     launchProcess(exePath),
   )
+  ipcMain.handle('dialog:selectExecutable', () => selectExecutable())
 }

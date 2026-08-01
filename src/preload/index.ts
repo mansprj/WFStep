@@ -7,6 +7,9 @@ const api = {
     restart: (name: string) => ipcRenderer.invoke('process:restart', name),
     launch: (path: string) => ipcRenderer.invoke('process:launch', path),
   },
+  dialogs: {
+    selectExecutable: () => ipcRenderer.invoke('dialog:selectExecutable'),
+  },
 }
 
 contextBridge.exposeInMainWorld('api', api)
