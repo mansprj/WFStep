@@ -83,6 +83,32 @@
   gap: 8px;
 }
 
+.input-row {
+  display: flex;
+  gap: 8px;
+}
+
+.input-row input {
+  flex: 1;
+  min-width: 0;
+}
+
+.input-row button {
+  font: inherit;
+  font-weight: 600;
+  color: var(--text);
+  background: var(--card-bg);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  padding: 10px 16px;
+  cursor: pointer;
+}
+
+.input-row button:disabled {
+  opacity: 0.6;
+  cursor: default;
+}
+
 .actions button {
   font: inherit;
   font-weight: 600;

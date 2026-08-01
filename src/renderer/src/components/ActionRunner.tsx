@@ -61,6 +61,13 @@ function ActionRunner() {
     }
   }
 
+  const browse = async (): Promise<void> => {
+    const path = await window.api.dialogs.selectExecutable()
+    if (path !== null) {
+      setValue(path)
+    }
+  }
+
   const run = async (): Promise<void> => {
     setResult({ kind: 'working', label: 'Running action…' })
     const outcome = await window.api.actions.run(action())
@@ -91,14 +98,21 @@ function ActionRunner() {
       </select>
 
       <label htmlFor="action-value">Parameter</label>
-      <input
-        id="action-value"
-        type="text"
-        placeholder={KIND_PLACEHOLDERS[kind]}
-        value={value}
-        onChange={(event) => setValue(event.target.value)}
-        disabled={busy}
-      />
+      <div className="input-row">
+        <input
+          id="action-value"
+          type="text"
+          placeholder={KIND_PLACEHOLDERS[kind]}
+          value={value}
+          onChange={(event) => setValue(event.target.value)}
+          disabled={busy}
+        />
+        {kind === 'start' && (
+          <button type="button" onClick={browse} disabled={busy}>
+            Browse…
+          </button>
+        )}
+      </div>
       <p className="help">{KIND_HELP[kind]}</p>
 
       <div className="actions">
