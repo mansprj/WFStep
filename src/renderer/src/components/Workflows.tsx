@@ -1,4 +1,5 @@
 import { useEffect, useState } from 'react'
+import { workflowStepLabel } from '@shared/workflows'
 import type { Workflow } from '@shared/workflows'
 import {
   actionFromInput,
@@ -78,45 +79,52 @@ function WorkflowEditor({
       <ul className="workflow-steps">
         {steps.map((step, index) => (
           <li key={index} className="workflow-step">
-            <select
-              value={step.kind}
-              onChange={(event) =>
-                updateStep(index, { kind: event.target.value as ActionKind })
-              }
-              disabled={busy}
-            >
-              {Object.entries(KIND_LABELS).map(([value, label]) => (
-                <option key={value} value={value}>
-                  {label}
-                </option>
-              ))}
-            </select>
-            <input
-              type="text"
-              placeholder={KIND_PLACEHOLDERS[step.kind]}
-              value={step.value}
-              onChange={(event) => updateStep(index, { value: event.target.value })}
-              disabled={busy}
-            />
-            {step.kind === 'start' && (
+            <div className="workflow-step-head">
+              <span className="workflow-step-index">{index + 1}</span>
+              <select
+                value={step.kind}
+                onChange={(event) =>
+                  updateStep(index, { kind: event.target.value as ActionKind })
+                }
+                disabled={busy}
+              >
+                {Object.entries(KIND_LABELS).map(([value, label]) => (
+                  <option key={value} value={value}>
+                    {label}
+                  </option>
+                ))}
+              </select>
               <button
                 type="button"
-                className="workflow-browse"
-                onClick={() => browse(index)}
+                onClick={() => removeStep(index)}
                 disabled={busy}
-                title="Browse for executable"
+                title="Remove step"
               >
-                Browse…
+                ×
               </button>
-            )}
-            <button
-              type="button"
-              onClick={() => removeStep(index)}
-              disabled={busy}
-              title="Remove step"
-            >
-              ×
-            </button>
+            </div>
+            <div className="input-row">
+              <input
+                type="text"
+                placeholder={KIND_PLACEHOLDERS[step.kind]}
+                value={step.value}
+                onChange={(event) =>
+                  updateStep(index, { value: event.target.value })
+                }
+                disabled={busy}
+              />
+              {step.kind === 'start' && (
+                <button
+                  type="button"
+                  className="workflow-browse"
+                  onClick={() => browse(index)}
+                  disabled={busy}
+                  title="Browse for executable"
+                >
+                  Browse…
+                </button>
+              )}
+            </div>
           </li>
         ))}
       </ul>
@@ -256,10 +264,13 @@ function Workflows() {
             <li key={workflow.id} className="app-item">
               <div className="app-info">
                 <span className="app-name">{workflow.name}</span>
-                <span className="app-detail">
-                  {workflow.actions.length} step
-                  {workflow.actions.length === 1 ? '' : 's'}
-                </span>
+                <ol className="workflow-summary">
+                  {workflow.actions.map((action, index) => (
+                    <li key={index} className="workflow-summary-step">
+                      {index + 1}. {workflowStepLabel(action)}
+                    </li>
+                  ))}
+                </ol>
               </div>
               <div className="app-actions">
                 <button
