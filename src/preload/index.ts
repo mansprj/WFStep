@@ -1,4 +1,5 @@
 import { contextBridge, ipcRenderer } from 'electron'
+import type { AutomationAction } from '@shared/actions'
 
 const api = {
   process: {
@@ -9,6 +10,9 @@ const api = {
   },
   dialogs: {
     selectExecutable: () => ipcRenderer.invoke('dialog:selectExecutable'),
+  },
+  actions: {
+    run: (action: AutomationAction) => ipcRenderer.invoke('action:run', action),
   },
 }
 

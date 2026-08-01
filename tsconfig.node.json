@@ -13,6 +13,9 @@
     "verbatimModuleSyntax": true,
     "moduleDetection": "force",
     "noEmit": true,
+    "paths": {
+      "@shared/*": ["./src/shared/*"]
+    },
 
     /* Linting */
     "strict": true,

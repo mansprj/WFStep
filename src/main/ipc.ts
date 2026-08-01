@@ -6,6 +6,9 @@ import {
   launchProcess,
   restartProcess,
 } from './processManager'
+import { executeAction } from './actions/executor'
+import { isAutomationAction } from '@shared/actions'
+import type { ActionResult } from '@shared/types'
 
 export function registerIpcHandlers(): void {
   ipcMain.handle('process:status', (_event, processName: string) =>
@@ -21,4 +24,10 @@ export function registerIpcHandlers(): void {
     launchProcess(exePath),
   )
   ipcMain.handle('dialog:selectExecutable', () => selectExecutable())
+  ipcMain.handle('action:run', (_event, value: unknown) => {
+    if (!isAutomationAction(value)) {
+      return { success: false, message: 'Invalid action.' } satisfies ActionResult
+    }
+    return executeAction(value)
+  })
 }

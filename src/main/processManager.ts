@@ -1,14 +1,14 @@
 import { execFile, spawn } from 'node:child_process'
 import { existsSync, statSync } from 'node:fs'
 import { promisify } from 'node:util'
-import type { ProcessActionResult, ProcessStatus } from '../shared/types'
+import type { ActionResult, ProcessStatus } from '@shared/types'
 
 const execFileAsync = promisify(execFile)
 
 // Windows process names are limited to these characters.
 const PROCESS_NAME_PATTERN = /^[A-Za-z0-9_.-]+$/
 
-function invalidNameResult(value: unknown): ProcessActionResult | null {
+function invalidNameResult(value: unknown): ActionResult | null {
   if (typeof value !== 'string' || !PROCESS_NAME_PATTERN.test(value)) {
     return { success: false, message: `Invalid process name: ${String(value)}` }
   }
@@ -54,7 +54,7 @@ export async function getProcessStatus(processName: string): Promise<ProcessStat
   return { running: true, path, message: `${processName} is running.` }
 }
 
-export async function killProcess(processName: string): Promise<ProcessActionResult> {
+export async function killProcess(processName: string): Promise<ActionResult> {
   const invalid = invalidNameResult(processName)
   if (invalid !== null) {
     return invalid
@@ -71,7 +71,7 @@ export async function killProcess(processName: string): Promise<ProcessActionRes
   }
 }
 
-export async function launchProcess(exePath: string): Promise<ProcessActionResult> {
+export async function launchProcess(exePath: string): Promise<ActionResult> {
   const path = exePath.trim()
   if (path.length === 0) {
     return { success: false, message: 'Executable path is empty.' }
@@ -103,7 +103,7 @@ export async function launchProcess(exePath: string): Promise<ProcessActionResul
   })
 }
 
-export async function restartProcess(processName: string): Promise<ProcessActionResult> {
+export async function restartProcess(processName: string): Promise<ActionResult> {
   const invalid = invalidNameResult(processName)
   if (invalid !== null) {
     return invalid
