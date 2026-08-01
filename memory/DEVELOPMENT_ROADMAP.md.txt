@@ -41,13 +41,20 @@ Automation Actions
 
 Supported actions
 
-- Start application
-- Stop application
-- Restart application
-- Delay
-- Execute shell command
-- Open URL
-- Open folder
+- [x] Start application
+- [x] Stop application
+- [x] Restart application
+- [x] Delay
+- [x] Execute shell command
+- [x] Open URL
+- [x] Open folder
+
+Implementation
+
+- [x] Shared AutomationAction union + runtime validator (src/shared/actions.ts)
+- [x] Action executor in main (src/main/actions/executor.ts)
+- [x] action:run IPC channel with validation
+- [x] Renderer ActionRunner panel (components split: ProcessControls, ActionRunner, ResultStatus)
 
 Goal
 

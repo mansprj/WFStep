@@ -2,7 +2,7 @@
 
 ## Project Status
 
-Current stage: Phase 2 (Process Management) complete. The app can check status, kill, restart, and launch Windows processes by name/path from the UI.
+Current stage: Phase 3 (Automation Actions) complete. The app can check status, kill, restart, and launch Windows processes by name/path from the UI, and run reusable automation actions (start/stop/restart, delay, shell command, open URL/folder) through a single action:run channel.
 
 Git repository is initialized and pushed to GitHub (mansprj/AutomationHub). Changes are committed and pushed after each task.
 
@@ -74,6 +74,7 @@ Completed
 - Git repository initialized and pushed to GitHub (mansprj/AutomationHub)
 - Phase 1: Foundation (window, preload, IPC, HMR)
 - Phase 2: Process Management (status / kill / restart / launch via process:* IPC channels)
+- Phase 3: Automation Actions (shared AutomationAction type with runtime guard, executor in main, action:run channel, renderer ActionRunner panel, @shared alias)
 
 Project structure
 
@@ -84,7 +85,7 @@ Project structure
 
 Pending
 
-- Phase 3: Automation Actions (start/stop/restart app, delay, shell command, open URL, open folder)
+- Phase 4: Workflow Engine (combine actions into sequences)
 
 ---
 
