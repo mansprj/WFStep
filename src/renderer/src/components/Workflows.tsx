@@ -37,7 +37,7 @@ function WorkflowIcon({ path }: { path: string | null }) {
 
   if (src === null) {
     return (
-      <span className="app-icon default" title="No icon">
+      <span className="workflow-icon default" title="No icon">
         <svg viewBox="0 0 16 16" fill="none">
           <circle cx="8" cy="8" r="3" stroke="currentColor" strokeWidth="1.4" />
           <path
@@ -50,7 +50,7 @@ function WorkflowIcon({ path }: { path: string | null }) {
       </span>
     )
   }
-  return <img className="app-icon" src={src} alt="" />
+  return <img className="workflow-icon" src={src} alt="" />
 }
 
 interface WorkflowEditorProps {

@@ -283,19 +283,25 @@ button.secondary:disabled {
   flex-shrink: 0;
 }
 
-.app-icon.default {
+.workflow-icon {
+  width: 40px;
+  height: 40px;
+  flex-shrink: 0;
+}
+
+.workflow-icon.default {
   display: inline-flex;
   align-items: center;
   justify-content: center;
   color: var(--text-dim);
   border: 1px dashed var(--border);
-  border-radius: 6px;
+  border-radius: 8px;
   box-sizing: border-box;
 }
 
-.app-icon.default svg {
-  width: 14px;
-  height: 14px;
+.workflow-icon.default svg {
+  width: 20px;
+  height: 20px;
 }
 
 .workflow-progress {
