@@ -23,11 +23,11 @@ Process Management
 
 Features
 
-- Find running processes
-- Kill process
-- Restart process
-- Launch executable
-- Process status
+- [x] Find running processes
+- [x] Kill process
+- [x] Restart process
+- [x] Launch executable
+- [x] Process status
 
 Goal
 

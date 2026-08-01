@@ -2,7 +2,9 @@
 
 ## Project Status
 
-Current stage: Electron integrated with Vite. The first feature (Restart Discord) is implemented and ready for UI verification.
+Current stage: Phase 2 (Process Management) complete. The app can check status, kill, restart, and launch Windows processes by name/path from the UI.
+
+Git repository is initialized and pushed to GitHub (mansprj/AutomationHub). Changes are committed and pushed after each task.
 
 ## Goal
 
@@ -68,8 +70,10 @@ Completed
 - Electron + Vite integration via electron-vite (dev, build, preview)
 - Electron Main Process created
 - Preload Script created
-- IPC configured (discord:restart)
 - First desktop window launches
+- Git repository initialized and pushed to GitHub (mansprj/AutomationHub)
+- Phase 1: Foundation (window, preload, IPC, HMR)
+- Phase 2: Process Management (status / kill / restart / launch via process:* IPC channels)
 
 Project structure
 
@@ -80,8 +84,7 @@ Project structure
 
 Pending
 
-- Verify Restart Discord flow from the UI (npm run dev, click the button)
-- Phase 2: Process Management (find/kill/restart/launch/status)
+- Phase 3: Automation Actions (start/stop/restart app, delay, shell command, open URL, open folder)
 
 ---
 
