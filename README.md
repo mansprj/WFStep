@@ -6,11 +6,12 @@ AutomationHub is a Windows desktop application for automating repetitive desktop
 
 - Restart Discord with one click (validates the whole application architecture)
 - Process management: find, kill, restart, launch, status
+- Applications library: save apps (by path and/or process name), persisted on disk, launch/restart/stop/edit/delete anytime
 - Automation actions: start/stop/restart app, delay, shell command, open URL, open folder
+- Workflows: combine actions into sequences, run step by step with progress and cancellation, persisted on disk
 
 ## Roadmap
 
-- Visual workflow engine (combine actions into sequences)
 - Global hotkeys
 - User profiles
 - Plugin system
@@ -64,12 +65,12 @@ npm start
 
 ```
 src/
-├── main/        # Electron main process (window, IPC, process management, action executor)
+├── main/        # Electron main process (window, IPC, process/app/workflow management, action executor)
 ├── preload/     # contextBridge API exposed to the renderer
 ├── renderer/    # React UI (Vite)
 │   ├── public/
 │   └── src/
-└── shared/      # types and action definitions shared between main and renderer
+└── shared/      # types and action/workflow definitions shared between main and renderer
 ```
 
 ## Architecture

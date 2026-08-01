@@ -1,6 +1,12 @@
 import type { AutomationAction } from '@shared/actions'
 import type { AppEntry, AppInput, AppMutationResult } from '@shared/apps'
 import type { ActionResult, ProcessStatus } from '@shared/types'
+import type {
+  Workflow,
+  WorkflowInput,
+  WorkflowMutationResult,
+  WorkflowProgress,
+} from '@shared/workflows'
 
 declare global {
   interface Window {
@@ -24,6 +30,17 @@ declare global {
         add: (input: AppInput) => Promise<AppMutationResult>
         update: (id: string, input: AppInput) => Promise<AppMutationResult>
         remove: (id: string) => Promise<AppMutationResult>
+      }
+      workflows: {
+        list: () => Promise<Workflow[]>
+        add: (input: WorkflowInput) => Promise<WorkflowMutationResult>
+        update: (id: string, input: WorkflowInput) => Promise<WorkflowMutationResult>
+        remove: (id: string) => Promise<WorkflowMutationResult>
+        run: (id: string) => Promise<{ success: boolean; message: string }>
+        cancel: () => Promise<{ success: boolean; message: string }>
+        onProgress: (
+          callback: (progress: WorkflowProgress) => void,
+        ) => () => void
       }
     }
   }

@@ -133,6 +133,86 @@
   padding-top: 12px;
 }
 
+button.secondary {
+  font: inherit;
+  font-weight: 600;
+  color: var(--text);
+  background: var(--card-bg);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  padding: 10px 16px;
+  cursor: pointer;
+}
+
+button.secondary:hover {
+  border-color: var(--accent);
+  color: var(--accent);
+}
+
+button.secondary:disabled {
+  opacity: 0.6;
+  cursor: default;
+}
+
+.workflow-editor {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  border-top: 1px solid var(--border);
+  padding-top: 12px;
+}
+
+.workflow-steps {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.workflow-step {
+  display: flex;
+  gap: 6px;
+}
+
+.workflow-step select {
+  flex: 1;
+  min-width: 0;
+}
+
+.workflow-step input {
+  flex: 2;
+  min-width: 0;
+}
+
+.workflow-step button {
+  font: inherit;
+  font-weight: 600;
+  color: var(--text);
+  background: var(--bg);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  padding: 0 12px;
+  cursor: pointer;
+}
+
+.workflow-step button:hover {
+  border-color: var(--error);
+  color: var(--error);
+}
+
+.workflow-step button:disabled {
+  opacity: 0.6;
+  cursor: default;
+}
+
+.workflow-progress {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
 .field input {
   font: inherit;
   color: var(--text);

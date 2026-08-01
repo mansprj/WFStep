@@ -10,6 +10,13 @@ import {
   restartProcess,
 } from './processManager'
 import { executeAction } from './actions/executor'
+import {
+  addWorkflow,
+  listWorkflows,
+  removeWorkflow,
+  updateWorkflow,
+} from './workflowsManager'
+import { cancelWorkflowRun, startWorkflowRun } from './workflowRunner'
 import { isAutomationAction } from '@shared/actions'
 import type { ActionResult } from '@shared/types'
 
@@ -45,4 +52,26 @@ export function registerIpcHandlers(): void {
     updateApp(id, value),
   )
   ipcMain.handle('apps:remove', (_event, id: unknown) => removeApp(id))
+  ipcMain.handle('workflows:list', () => listWorkflows())
+  ipcMain.handle('workflows:add', (_event, value: unknown) => addWorkflow(value))
+  ipcMain.handle('workflows:update', (_event, id: unknown, value: unknown) =>
+    updateWorkflow(id, value),
+  )
+  ipcMain.handle('workflows:remove', (_event, id: unknown) => removeWorkflow(id))
+  ipcMain.handle('workflows:run', (event, id: unknown) => {
+    if (typeof id !== 'string') {
+      return { success: false, message: 'Invalid workflow id.' }
+    }
+    const workflow = listWorkflows().find((entry) => entry.id === id)
+    if (workflow === undefined) {
+      return { success: false, message: 'Workflow not found.' }
+    }
+    return startWorkflowRun(event, workflow)
+  })
+  ipcMain.handle('workflows:cancel', () => {
+    if (cancelWorkflowRun()) {
+      return { success: true, message: 'Cancelling…' }
+    }
+    return { success: false, message: 'No workflow is running.' }
+  })
 }

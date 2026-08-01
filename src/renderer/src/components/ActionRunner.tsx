@@ -1,39 +1,13 @@
 import { useState } from 'react'
-import type { AutomationAction } from '@shared/actions'
+import {
+  actionFromInput,
+  KIND_HELP,
+  KIND_LABELS,
+  KIND_PLACEHOLDERS,
+  type ActionKind,
+} from '../actionForm'
 import type { Result } from '../result'
 import ResultStatus from './ResultStatus'
-
-type ActionKind = AutomationAction['type']
-
-const KIND_LABELS: Record<ActionKind, string> = {
-  start: 'Start process',
-  stop: 'Stop process',
-  restart: 'Restart process',
-  delay: 'Delay',
-  shell: 'Run shell command',
-  openUrl: 'Open URL',
-  openFolder: 'Open folder',
-}
-
-const KIND_PLACEHOLDERS: Record<ActionKind, string> = {
-  start: 'C:\\Path\\To\\App.exe',
-  stop: 'Process name (e.g. Discord)',
-  restart: 'Process name (e.g. Discord)',
-  delay: 'Milliseconds (e.g. 2000)',
-  shell: 'Command (e.g. echo hello)',
-  openUrl: 'https://example.com',
-  openFolder: 'C:\\Path\\To\\Folder',
-}
-
-const KIND_HELP: Record<ActionKind, string> = {
-  start: 'Launch an executable file.',
-  stop: 'Force stop a running process by name.',
-  restart: 'Restart a running process by name.',
-  delay: 'Wait the given number of milliseconds.',
-  shell: 'Run a shell command.',
-  openUrl: 'Open a web address (http/https only).',
-  openFolder: 'Open a folder in Explorer.',
-}
 
 function ActionRunner() {
   const [kind, setKind] = useState<ActionKind>('start')
@@ -41,25 +15,6 @@ function ActionRunner() {
   const [result, setResult] = useState<Result>({ kind: 'idle' })
 
   const busy = result.kind === 'working'
-
-  const action = (): AutomationAction => {
-    switch (kind) {
-      case 'start':
-        return { type: 'start', executablePath: value }
-      case 'stop':
-        return { type: 'stop', processName: value }
-      case 'restart':
-        return { type: 'restart', processName: value }
-      case 'delay':
-        return { type: 'delay', ms: Number(value) }
-      case 'shell':
-        return { type: 'shell', command: value }
-      case 'openUrl':
-        return { type: 'openUrl', url: value }
-      case 'openFolder':
-        return { type: 'openFolder', path: value }
-    }
-  }
 
   const browse = async (): Promise<void> => {
     const path = await window.api.dialogs.selectExecutable()
@@ -70,7 +25,7 @@ function ActionRunner() {
 
   const run = async (): Promise<void> => {
     setResult({ kind: 'working', label: 'Running action…' })
-    const outcome = await window.api.actions.run(action())
+    const outcome = await window.api.actions.run(actionFromInput(kind, value))
     setResult(outcome.success
       ? { kind: 'success', message: outcome.message }
       : { kind: 'error', message: outcome.message })

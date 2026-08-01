@@ -68,25 +68,19 @@ Workflow Engine
 
 Users can combine actions into sequences.
 
-Example
+Implementation
 
-Restart Discord
+- [x] Shared Workflow type + runtime validator (src/shared/workflows.ts)
+- [x] Workflow persistence (workflows.json in userData) + CRUD
+- [x] Sequential workflow runner with progress events and cancellation (src/main/workflowRunner.ts)
+- [x] workflows:* IPC channels + workflow:progress events
+- [x] Renderer Workflows panel (list, step editor, run/cancel progress)
+- [x] Action form helpers shared by ActionRunner and WorkflowEditor (src/renderer/src/actionForm.ts)
 
-↓
+Notes
 
-Wait 2 seconds
-
-↓
-
-Launch Steam
-
-↓
-
-Open Spotify
-
-↓
-
-Display notification
+- Runner stops on the first failed step; cancellation via workflows:cancel.
+- Applications library (src/shared/apps.ts, src/main/appsManager.ts) was added before Phase 4: saved apps persist on disk and restart/stop uses the executable image name.
 
 Goal
 

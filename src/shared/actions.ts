@@ -41,3 +41,23 @@ export function isAutomationAction(value: unknown): value is AutomationAction {
       return false
   }
 }
+
+// Short human-readable description used in workflow progress and step lists.
+export function describeAction(action: AutomationAction): string {
+  switch (action.type) {
+    case 'start':
+      return `Start process: ${action.executablePath}`
+    case 'stop':
+      return `Stop process: ${action.processName}`
+    case 'restart':
+      return `Restart process: ${action.processName}`
+    case 'delay':
+      return `Delay ${action.ms} ms`
+    case 'shell':
+      return `Shell command: ${action.command}`
+    case 'openUrl':
+      return `Open URL: ${action.url}`
+    case 'openFolder':
+      return `Open folder: ${action.path}`
+  }
+}
