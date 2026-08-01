@@ -32,8 +32,13 @@ function ActionRunner() {
   }
 
   return (
-    <div className="field">
-      <h2 className="field-title">Action runner</h2>
+    <div className="field test-panel">
+      <h2 className="field-title">
+        Action runner <span className="badge">test</span>
+      </h2>
+      <p className="help">
+        Testing area — try a single action before adding it to a workflow.
+      </p>
 
       <label htmlFor="action-kind">Action type</label>
       <select

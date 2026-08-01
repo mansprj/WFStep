@@ -58,6 +58,22 @@
   border-color: var(--accent);
 }
 
+.field.test-panel {
+  border-style: dashed;
+}
+
+.badge {
+  display: inline-block;
+  font-size: 11px;
+  font-weight: 600;
+  color: var(--accent);
+  border: 1px solid var(--accent);
+  border-radius: 999px;
+  padding: 2px 8px;
+  vertical-align: middle;
+  margin-left: 6px;
+}
+
 .help {
   margin: 0;
   color: var(--text-dim);
