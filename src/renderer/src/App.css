@@ -277,6 +277,25 @@ button.secondary:disabled {
   display: flex;
   flex-direction: column;
   gap: 8px;
+  cursor: grab;
+}
+
+.workflow-step.dragging {
+  opacity: 0.5;
+}
+
+.workflow-step.drop-over {
+  border-color: var(--accent);
+  box-shadow: 0 0 0 2px color-mix(in srgb, var(--accent) 25%, transparent);
+}
+
+.workflow-step-grip {
+  color: var(--text-dim);
+  font-size: 12px;
+  letter-spacing: -2px;
+  cursor: grab;
+  user-select: none;
+  padding: 0 2px;
 }
 
 .workflow-step-head {

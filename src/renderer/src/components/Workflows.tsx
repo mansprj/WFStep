@@ -325,6 +325,8 @@ function WorkflowEditor({
   const [steps, setSteps] = useState<StepRow[]>(initialSteps)
   const [iconPath, setIconPath] = useState<string | null>(initialIcon)
   const [hotkey, setHotkey] = useState<string | null>(initialHotkey)
+  const [dragIndex, setDragIndex] = useState<number | null>(null)
+  const [overIndex, setOverIndex] = useState<number | null>(null)
 
   // Programs referenced by "Start process" steps, offered as shortcuts when
   // adding Stop/Restart steps so the same path is reused.
@@ -350,15 +352,14 @@ function WorkflowEditor({
     setSteps((current) => current.filter((_, i) => i !== index))
   }
 
-  const moveStep = (index: number, delta: number): void => {
+  const reorderStep = (from: number, to: number): void => {
     setSteps((current) => {
-      const target = index + delta
-      if (target < 0 || target >= current.length) {
+      if (from === to || to < 0 || to >= current.length) {
         return current
       }
       const next = [...current]
-      const [step] = next.splice(index, 1)
-      next.splice(target, 0, step)
+      const [step] = next.splice(from, 1)
+      next.splice(to, 0, step)
       return next
     })
   }
@@ -433,49 +434,68 @@ function WorkflowEditor({
       </p>
 
       <ul className="workflow-steps">
-        {steps.map((step, index) => (
-          <li key={index} className="workflow-step">
-            <div className="workflow-step-head">
-              <span className="workflow-step-index">{index + 1}</span>
-              <ActionIcon kind={step.kind} />
-              <select
-                value={step.kind}
-                onChange={(event) =>
-                  updateStep(index, { kind: event.target.value as ActionKind })
+        {steps.map((step, index) => {
+          const isDragging = dragIndex === index
+          const isDropTarget =
+            dragIndex !== null && overIndex === index && overIndex !== dragIndex
+          return (
+            <li
+              key={index}
+              className={`workflow-step${isDragging ? ' dragging' : ''}${isDropTarget ? ' drop-over' : ''}`}
+              draggable={!busy}
+              onDragStart={() => setDragIndex(index)}
+              onDragOver={(event) => {
+                if (dragIndex === null) {
+                  return
                 }
-                disabled={busy}
-              >
-                {Object.entries(KIND_LABELS).map(([value, label]) => (
-                  <option key={value} value={value}>
-                    {label}
-                  </option>
-                ))}
-              </select>
-              <button
-                type="button"
-                onClick={() => moveStep(index, -1)}
-                disabled={busy || index === 0}
-                title="Move step up"
-              >
-                ↑
-              </button>
-              <button
-                type="button"
-                onClick={() => moveStep(index, 1)}
-                disabled={busy || index === steps.length - 1}
-                title="Move step down"
-              >
-                ↓
-              </button>
-              <button
-                type="button"
-                onClick={() => removeStep(index)}
-                disabled={busy}
-                title="Remove step"
-              >
-                ×
-              </button>
-            </div>
+                event.preventDefault()
+                event.dataTransfer.dropEffect = 'move'
+                setOverIndex(index)
+              }}
+              onDrop={(event) => {
+                event.preventDefault()
+                if (dragIndex !== null) {
+                  reorderStep(dragIndex, index)
+                }
+                setDragIndex(null)
+                setOverIndex(null)
+              }}
+              onDragEnd={() => {
+                setDragIndex(null)
+                setOverIndex(null)
+              }}
+            >
+              <div className="workflow-step-head">
+                <span
+                  className="workflow-step-grip"
+                  title={busy ? undefined : 'Drag to reorder'}
+                >
+                  ⋮⋮
+                </span>
+                <span className="workflow-step-index">{index + 1}</span>
+                <ActionIcon kind={step.kind} />
+                <select
+                  value={step.kind}
+                  onChange={(event) =>
+                    updateStep(index, { kind: event.target.value as ActionKind })
+                  }
+                  disabled={busy}
+                >
+                  {Object.entries(KIND_LABELS).map(([value, label]) => (
+                    <option key={value} value={value}>
+                      {label}
+                    </option>
+                  ))}
+                </select>
+                <button
+                  type="button"
+                  onClick={() => removeStep(index)}
+                  disabled={busy}
+                  title="Remove step"
+                >
+                  ×
+                </button>
+              </div>
             <div className="input-row">
               <input
                 type="text"
@@ -525,8 +545,9 @@ function WorkflowEditor({
                   ))}
                 </div>
               )}
-          </li>
-        ))}
+            </li>
+          )
+        })}
       </ul>
 
       <div className="actions">
