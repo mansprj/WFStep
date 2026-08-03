@@ -229,12 +229,18 @@ function StepLabel({ action }: { action: AutomationAction }) {
     if (url === null) {
       return
     }
+    const promise = window.api.pages?.title?.(url)
+    if (promise === undefined) {
+      return
+    }
     let cancelled = false
-    void window.api.pages.title(url).then((title) => {
-      if (!cancelled && title !== null) {
-        setLoaded({ url, title })
-      }
-    })
+    void promise
+      .then((title) => {
+        if (!cancelled && title !== null) {
+          setLoaded({ url, title })
+        }
+      })
+      .catch(() => {})
     return () => {
       cancelled = true
     }
@@ -344,8 +350,25 @@ function WorkflowEditor({
     setSteps((current) => current.filter((_, i) => i !== index))
   }
 
+  const moveStep = (index: number, delta: number): void => {
+    setSteps((current) => {
+      const target = index + delta
+      if (target < 0 || target >= current.length) {
+        return current
+      }
+      const next = [...current]
+      const [step] = next.splice(index, 1)
+      next.splice(target, 0, step)
+      return next
+    })
+  }
+
   const browse = async (index: number): Promise<void> => {
-    const path = await window.api.dialogs.selectExecutable()
+    const step = steps[index]
+    const path =
+      step.kind === 'openFolder'
+        ? await window.api.dialogs.selectFolder()
+        : await window.api.dialogs.selectExecutable()
     if (path !== null) {
       updateStep(index, { value: path })
     }
@@ -430,6 +453,22 @@ function WorkflowEditor({
               </select>
               <button
                 type="button"
+                onClick={() => moveStep(index, -1)}
+                disabled={busy || index === 0}
+                title="Move step up"
+              >
+                ↑
+              </button>
+              <button
+                type="button"
+                onClick={() => moveStep(index, 1)}
+                disabled={busy || index === steps.length - 1}
+                title="Move step down"
+              >
+                ↓
+              </button>
+              <button
+                type="button"
                 onClick={() => removeStep(index)}
                 disabled={busy}
                 title="Remove step"
@@ -449,13 +488,18 @@ function WorkflowEditor({
               />
               {(step.kind === 'start' ||
                 step.kind === 'stop' ||
-                step.kind === 'restart') && (
+                step.kind === 'restart' ||
+                step.kind === 'openFolder') && (
                 <button
                   type="button"
                   className="workflow-browse"
                   onClick={() => browse(index)}
                   disabled={busy}
-                  title="Browse for executable"
+                  title={
+                    step.kind === 'openFolder'
+                      ? 'Browse for folder'
+                      : 'Browse for executable'
+                  }
                 >
                   Browse…
                 </button>

@@ -1,7 +1,7 @@
 import { exec } from 'node:child_process'
 import { setTimeout as delay } from 'node:timers/promises'
 import { promisify } from 'node:util'
-import { shell } from 'electron'
+import { app, shell } from 'electron'
 import {
   killProcess,
   killProcessByExe,
@@ -9,7 +9,9 @@ import {
   restartExe,
   restartProcess,
 } from '../processManager'
+import { logEvent } from '../logManager'
 import type { AutomationAction } from '@shared/actions'
+import type { LogSource } from '@shared/logs'
 import type { ActionResult } from '@shared/types'
 
 const execAsync = promisify(exec)
@@ -51,7 +53,41 @@ async function openUrl(url: string): Promise<ActionResult> {
   }
 }
 
-async function openFolder(path: string): Promise<ActionResult> {
+// Known shell-folder display names (English and Russian) mapped to Electron's
+// path keys, so "Рабочий стол" opens the real Desktop folder.
+const SPECIAL_FOLDERS: Record<string, Parameters<typeof app.getPath>[0]> = {
+  desktop: 'desktop',
+  'рабочий стол': 'desktop',
+  downloads: 'downloads',
+  загрузки: 'downloads',
+  documents: 'documents',
+  документы: 'documents',
+  music: 'music',
+  музыка: 'music',
+  pictures: 'pictures',
+  изображения: 'pictures',
+  videos: 'videos',
+  видео: 'videos',
+  home: 'home',
+}
+
+function resolveFolderPath(value: string): string {
+  if (value.length === 0 || /[\\/]/.test(value)) {
+    return value
+  }
+  const key = SPECIAL_FOLDERS[value.toLowerCase()]
+  if (key === undefined) {
+    return value
+  }
+  try {
+    return app.getPath(key)
+  } catch {
+    return value
+  }
+}
+
+async function openFolder(input: string): Promise<ActionResult> {
+  const path = resolveFolderPath(input.trim())
   const error = await shell.openPath(path)
   if (error.length > 0) {
     return { success: false, message: `Failed to open ${path}: ${error}` }
@@ -59,26 +95,52 @@ async function openFolder(path: string): Promise<ActionResult> {
   return { success: true, message: `Opened ${path}` }
 }
 
-export async function executeAction(action: AutomationAction): Promise<ActionResult> {
+export interface ActionRunContext {
+  source: LogSource
+  context: string
+}
+
+export async function executeAction(
+  action: AutomationAction,
+  runContext?: ActionRunContext,
+): Promise<ActionResult> {
+  let result: ActionResult
   switch (action.type) {
     case 'start':
-      return launchProcess(action.executablePath)
+      result = await launchProcess(action.executablePath)
+      break
     case 'stop':
-      return isExecutablePath(action.processName)
-        ? killProcessByExe(action.processName)
-        : killProcess(action.processName)
+      result = isExecutablePath(action.processName)
+        ? await killProcessByExe(action.processName)
+        : await killProcess(action.processName)
+      break
     case 'restart':
-      return isExecutablePath(action.processName)
-        ? restartExe(action.processName)
-        : restartProcess(action.processName)
+      result = isExecutablePath(action.processName)
+        ? await restartExe(action.processName)
+        : await restartProcess(action.processName)
+      break
     case 'delay':
       await delay(action.ms)
-      return { success: true, message: `Delayed for ${action.ms} ms.` }
+      result = { success: true, message: `Delayed for ${action.ms} ms.` }
+      break
     case 'shell':
-      return runShell(action.command)
+      result = await runShell(action.command)
+      break
     case 'openUrl':
-      return openUrl(action.url)
+      result = await openUrl(action.url)
+      break
     case 'openFolder':
-      return openFolder(action.path)
+      result = await openFolder(action.path)
+      break
   }
+  if (runContext !== undefined) {
+    logEvent({
+      source: runContext.source,
+      context: runContext.context,
+      actionType: action.type,
+      success: result.success,
+      message: result.message,
+    })
+  }
+  return result
 }

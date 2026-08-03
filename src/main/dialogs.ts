@@ -23,6 +23,25 @@ export async function selectExecutable(): Promise<string | null> {
   return result.filePaths[0]
 }
 
+// Opens a native directory picker.
+// Returns the selected path, or null when cancelled.
+export async function selectFolder(): Promise<string | null> {
+  const options: OpenDialogOptions = {
+    title: 'Select folder',
+    properties: ['openDirectory', 'createDirectory'],
+  }
+
+  const window = BrowserWindow.getFocusedWindow()
+  const result = window
+    ? await dialog.showOpenDialog(window, options)
+    : await dialog.showOpenDialog(options)
+
+  if (result.canceled || result.filePaths.length === 0) {
+    return null
+  }
+  return result.filePaths[0]
+}
+
 // Opens a native file picker limited to common image formats.
 // Returns the selected path, or null when cancelled.
 export async function selectImage(): Promise<string | null> {

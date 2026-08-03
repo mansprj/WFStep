@@ -1,8 +1,7 @@
 import { app, ipcMain, net } from 'electron'
 import { existsSync, readFileSync } from 'node:fs'
 import { extname } from 'node:path'
-import { selectExecutable, selectImage } from './dialogs'
-import { addApp, listApps, removeApp, updateApp } from './appsManager'
+import { selectExecutable, selectFolder, selectImage } from './dialogs'
 import {
   findProcessPath,
   getProcessStatus,
@@ -21,6 +20,7 @@ import {
 } from './workflowsManager'
 import { cancelWorkflowRun, startWorkflowRun } from './workflowRunner'
 import { hotkeyIssue, refreshHotkeys } from './hotkeyManager'
+import { clearLogs, listLogs } from './logManager'
 import { isAutomationAction } from '@shared/actions'
 import type { ActionResult } from '@shared/types'
 
@@ -97,7 +97,7 @@ async function pageTitleForUrl(url: string): Promise<string | null> {
   } catch {
     return null
   }
-  if (!/^https?:\/\//i.test(parsed.protocol)) {
+  if (parsed.protocol !== 'https:' && parsed.protocol !== 'http:') {
     return null
   }
 
@@ -176,6 +176,7 @@ export function registerIpcHandlers(): void {
   )
   ipcMain.handle('dialog:selectExecutable', () => selectExecutable())
   ipcMain.handle('dialog:selectImage', () => selectImage())
+  ipcMain.handle('dialog:selectFolder', () => selectFolder())
   ipcMain.handle('icon:get', async (_event, value: unknown) => {
     if (typeof value !== 'string' || value.trim().length === 0) {
       return null
@@ -208,14 +209,13 @@ export function registerIpcHandlers(): void {
     if (!isAutomationAction(value)) {
       return { success: false, message: 'Invalid action.' } satisfies ActionResult
     }
-    return executeAction(value)
+    return executeAction(value, { source: 'action', context: 'Action Runner' })
   })
-  ipcMain.handle('apps:list', () => listApps())
-  ipcMain.handle('apps:add', (_event, value: unknown) => addApp(value))
-  ipcMain.handle('apps:update', (_event, id: unknown, value: unknown) =>
-    updateApp(id, value),
-  )
-  ipcMain.handle('apps:remove', (_event, id: unknown) => removeApp(id))
+  ipcMain.handle('logs:list', () => listLogs())
+  ipcMain.handle('logs:clear', () => {
+    clearLogs()
+    return { success: true, message: 'Logs cleared.' }
+  })
   ipcMain.handle('workflows:list', () => listWorkflows())
   ipcMain.handle('workflows:add', (_event, value: unknown) => {
     const result = addWorkflow(value)

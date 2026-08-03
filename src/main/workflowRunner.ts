@@ -1,5 +1,6 @@
 import { BrowserWindow } from 'electron'
 import { executeAction } from './actions/executor'
+import { logEvent } from './logManager'
 import { describeAction } from '@shared/actions'
 import type { Workflow, WorkflowProgress } from '@shared/workflows'
 
@@ -42,17 +43,34 @@ export async function startWorkflowRun(
 
   void (async () => {
     const totalSteps = workflow.actions.length
+    logEvent({
+      source: 'workflow',
+      context: workflow.name,
+      actionType: 'workflow',
+      success: true,
+      message: `Workflow started (${totalSteps} step${totalSteps === 1 ? '' : 's'}).`,
+    })
 
     for (let stepIndex = 0; stepIndex < totalSteps; stepIndex++) {
       if (cancelRequested) {
         send(progress(stepIndex, totalSteps, 'cancelled', 'Cancelled by user.'))
+        logEvent({
+          source: 'workflow',
+          context: workflow.name,
+          actionType: 'workflow',
+          success: false,
+          message: 'Workflow cancelled by user.',
+        })
         break
       }
 
       const action = workflow.actions[stepIndex]
       send(progress(stepIndex, totalSteps, 'started', describeAction(action)))
 
-      const result = await executeAction(action)
+      const result = await executeAction(action, {
+        source: 'workflow',
+        context: workflow.name,
+      })
       send(
         progress(
           stepIndex,
@@ -63,6 +81,13 @@ export async function startWorkflowRun(
       )
 
       if (!result.success) {
+        logEvent({
+          source: 'workflow',
+          context: workflow.name,
+          actionType: 'workflow',
+          success: false,
+          message: `Workflow stopped at step ${stepIndex + 1}/${totalSteps}: ${result.message}`,
+        })
         break
       }
     }

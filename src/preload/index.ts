@@ -1,6 +1,6 @@
 import { contextBridge, ipcRenderer } from 'electron'
 import type { AutomationAction } from '@shared/actions'
-import type { AppInput } from '@shared/apps'
+import type { LogEntry } from '@shared/logs'
 import type { WorkflowInput, WorkflowProgress } from '@shared/workflows'
 
 const api = {
@@ -15,6 +15,7 @@ const api = {
   dialogs: {
     selectExecutable: () => ipcRenderer.invoke('dialog:selectExecutable'),
     selectImage: () => ipcRenderer.invoke('dialog:selectImage'),
+    selectFolder: () => ipcRenderer.invoke('dialog:selectFolder'),
   },
   icons: {
     get: (path: string) => ipcRenderer.invoke('icon:get', path),
@@ -28,12 +29,25 @@ const api = {
   actions: {
     run: (action: AutomationAction) => ipcRenderer.invoke('action:run', action),
   },
-  apps: {
-    list: () => ipcRenderer.invoke('apps:list'),
-    add: (input: AppInput) => ipcRenderer.invoke('apps:add', input),
-    update: (id: string, input: AppInput) =>
-      ipcRenderer.invoke('apps:update', id, input),
-    remove: (id: string) => ipcRenderer.invoke('apps:remove', id),
+  logs: {
+    list: () => ipcRenderer.invoke('logs:list'),
+    clear: () => ipcRenderer.invoke('logs:clear'),
+    onEntry: (callback: (entry: LogEntry) => void) => {
+      const listener = (_event: Electron.IpcRendererEvent, entry: LogEntry): void => {
+        callback(entry)
+      }
+      ipcRenderer.on('log:entry', listener)
+      return () => {
+        ipcRenderer.removeListener('log:entry', listener)
+      }
+    },
+    onCleared: (callback: () => void) => {
+      const listener = (): void => callback()
+      ipcRenderer.on('log:cleared', listener)
+      return () => {
+        ipcRenderer.removeListener('log:cleared', listener)
+      }
+    },
   },
   workflows: {
     list: () => ipcRenderer.invoke('workflows:list'),

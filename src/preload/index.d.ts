@@ -1,5 +1,5 @@
 import type { AutomationAction } from '@shared/actions'
-import type { AppEntry, AppInput, AppMutationResult } from '@shared/apps'
+import type { LogEntry } from '@shared/logs'
 import type { ActionResult, ProcessStatus } from '@shared/types'
 import type {
   Workflow,
@@ -22,6 +22,7 @@ declare global {
       dialogs: {
         selectExecutable: () => Promise<string | null>
         selectImage: () => Promise<string | null>
+        selectFolder: () => Promise<string | null>
       }
       icons: {
         get: (path: string) => Promise<string | null>
@@ -35,11 +36,11 @@ declare global {
       actions: {
         run: (action: AutomationAction) => Promise<ActionResult>
       }
-      apps: {
-        list: () => Promise<AppEntry[]>
-        add: (input: AppInput) => Promise<AppMutationResult>
-        update: (id: string, input: AppInput) => Promise<AppMutationResult>
-        remove: (id: string) => Promise<AppMutationResult>
+      logs: {
+        list: () => Promise<LogEntry[]>
+        clear: () => Promise<{ success: boolean; message: string }>
+        onEntry: (callback: (entry: LogEntry) => void) => () => void
+        onCleared: (callback: () => void) => () => void
       }
       workflows: {
         list: () => Promise<Workflow[]>

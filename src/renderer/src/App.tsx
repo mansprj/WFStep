@@ -1,17 +1,17 @@
 import './App.css'
-import Applications from './components/Applications'
 import Workflows from './components/Workflows'
 import ActionRunner from './components/ActionRunner'
+import Logs from './components/Logs'
 
 function App() {
   return (
     <div className="app">
       <h1>AutomationHub</h1>
-      <p className="subtitle">Applications, workflows & action runner</p>
+      <p className="subtitle">Workflows & action runner</p>
 
-      <Applications />
       <Workflows />
       <ActionRunner />
+      <Logs />
     </div>
   )
 }

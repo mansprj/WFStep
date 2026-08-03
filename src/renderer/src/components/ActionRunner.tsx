@@ -17,7 +17,10 @@ function ActionRunner() {
   const busy = result.kind === 'working'
 
   const browse = async (): Promise<void> => {
-    const path = await window.api.dialogs.selectExecutable()
+    const path =
+      kind === 'openFolder'
+        ? await window.api.dialogs.selectFolder()
+        : await window.api.dialogs.selectExecutable()
     if (path !== null) {
       setValue(path)
     }
@@ -67,7 +70,7 @@ function ActionRunner() {
           onChange={(event) => setValue(event.target.value)}
           disabled={busy}
         />
-        {kind === 'start' && (
+        {(kind === 'start' || kind === 'openFolder') && (
           <button type="button" onClick={browse} disabled={busy}>
             Browse…
           </button>
