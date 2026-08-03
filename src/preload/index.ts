@@ -22,6 +22,9 @@ const api = {
   favicons: {
     get: (url: string) => ipcRenderer.invoke('favicon:get', url),
   },
+  pages: {
+    title: (url: string) => ipcRenderer.invoke('page:title', url),
+  },
   actions: {
     run: (action: AutomationAction) => ipcRenderer.invoke('action:run', action),
   },

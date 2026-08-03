@@ -72,9 +72,9 @@ export function describeActionShort(action: AutomationAction): string {
     case 'start':
       return `Start ${baseName(action.executablePath)}`
     case 'stop':
-      return `Stop ${action.processName}`
+      return `Stop ${baseName(action.processName)}`
     case 'restart':
-      return `Restart ${action.processName}`
+      return `Restart ${baseName(action.processName)}`
     case 'delay':
       return `Wait ${action.ms} ms`
     case 'shell':

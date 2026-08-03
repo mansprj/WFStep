@@ -221,6 +221,31 @@ function iconRequest(
   return null
 }
 
+function StepLabel({ action }: { action: AutomationAction }) {
+  const url = action.type === 'openUrl' ? action.url : null
+  const [loaded, setLoaded] = useState<{ url: string; title: string } | null>(null)
+
+  useEffect(() => {
+    if (url === null) {
+      return
+    }
+    let cancelled = false
+    void window.api.pages.title(url).then((title) => {
+      if (!cancelled && title !== null) {
+        setLoaded({ url, title })
+      }
+    })
+    return () => {
+      cancelled = true
+    }
+  }, [url])
+
+  if (url !== null && loaded !== null && loaded.url === url) {
+    return <>Open {loaded.title}</>
+  }
+  return <>{describeActionShort(action)}</>
+}
+
 function StepIcon({ action }: { action: AutomationAction }) {
   const request = iconRequest(action)
   const kind = request?.kind ?? null
@@ -613,7 +638,7 @@ function Workflows() {
                     <li key={index} className="workflow-summary-step">
                       <StepIcon action={action} />
                       <span>
-                        {index + 1}. {describeActionShort(action)}
+                        {index + 1}. <StepLabel action={action} />
                       </span>
                     </li>
                   ))}

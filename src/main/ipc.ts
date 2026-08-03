@@ -76,6 +76,60 @@ async function fetchDataUrl(
   }
 }
 
+function decodeHtmlEntities(html: string): string {
+  return html
+    .replace(/&amp;/g, '&')
+    .replace(/&lt;/g, '<')
+    .replace(/&gt;/g, '>')
+    .replace(/&quot;/g, '"')
+    .replace(/&nbsp;/g, ' ')
+    .replace(/&#(\d+);/g, (_match, code) =>
+      String.fromCodePoint(Number(code)),
+    )
+}
+
+// Page <title> for the openUrl action, e.g. "Google Переводчик" for a
+// translate.google.com URL. Falls back to null when the page has no title.
+async function pageTitleForUrl(url: string): Promise<string | null> {
+  let parsed: URL
+  try {
+    parsed = new URL(url)
+  } catch {
+    return null
+  }
+  if (!/^https?:\/\//i.test(parsed.protocol)) {
+    return null
+  }
+
+  const controller = new AbortController()
+  const timer = setTimeout(() => controller.abort(), 5000)
+  try {
+    const response = await net.fetch(parsed.href, {
+      signal: controller.signal,
+      headers: { 'Accept-Language': 'ru-RU,ru;q=0.9,en-US;q=0.8' },
+    })
+    if (!response.ok) {
+      return null
+    }
+    const html = await response.text()
+    const match = /<title[^>]*>([\s\S]*?)<\/title>/i.exec(html)
+    if (match === null) {
+      return null
+    }
+    const title = decodeHtmlEntities(match[1])
+      .replace(/\s+/g, ' ')
+      .trim()
+    if (title.length === 0) {
+      return null
+    }
+    return title.length > 60 ? `${title.slice(0, 57)}…` : title
+  } catch {
+    return null
+  } finally {
+    clearTimeout(timer)
+  }
+}
+
 // Website favicon for the openUrl action. Tries Google's favicon service first,
 // then the origin's favicon.ico. Returns null when the site has no icon.
 async function faviconForUrl(url: string): Promise<string | null> {
@@ -143,6 +197,12 @@ export function registerIpcHandlers(): void {
       return null
     }
     return faviconForUrl(value.trim())
+  })
+  ipcMain.handle('page:title', (_event, value: unknown) => {
+    if (typeof value !== 'string' || !/^https?:\/\//i.test(value.trim())) {
+      return null
+    }
+    return pageTitleForUrl(value.trim())
   })
   ipcMain.handle('action:run', (_event, value: unknown) => {
     if (!isAutomationAction(value)) {
