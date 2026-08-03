@@ -1,5 +1,6 @@
 import { useEffect, useRef, useState } from 'react'
 import { describeActionShort } from '@shared/actions'
+import type { AutomationAction } from '@shared/actions'
 import type { Workflow } from '@shared/workflows'
 import {
   actionFromInput,
@@ -17,8 +18,13 @@ interface StepRow {
   value: string
 }
 
+function displayName(path: string): string {
+  const base = path.split(/[\\/]/).pop() ?? path
+  return base.replace(/\.exe$/i, '')
+}
+
 const NAMED_KEYS: Record<string, string> = {
-  ' ': 'Space',
+  Space: 'Space',
   Enter: 'Enter',
   Escape: 'Esc',
   Tab: 'Tab',
@@ -35,7 +41,9 @@ const NAMED_KEYS: Record<string, string> = {
   ArrowRight: 'Right',
 }
 
-function eventToAccelerator(event: React.KeyboardEvent): string | null {
+// Builds an Electron accelerator from the physical key (event.code), so the
+// combination works regardless of the keyboard layout (e.g. Cyrillic).
+function codeToAccelerator(event: React.KeyboardEvent): string | null {
   const modifiers: string[] = []
   if (event.ctrlKey) modifiers.push('Ctrl')
   if (event.altKey) modifiers.push('Alt')
@@ -44,17 +52,28 @@ function eventToAccelerator(event: React.KeyboardEvent): string | null {
     return null
   }
 
-  const key = event.key
-  if (key === 'Control' || key === 'Alt' || key === 'Shift' || key === 'Meta') {
+  const code = event.code
+  if (/^(Control|Alt|Shift|Meta)(Left|Right)$/.test(code)) {
     return null
   }
-  if (/^[a-z0-9]$/i.test(key)) {
-    return [...modifiers, key.toUpperCase()].join('+')
+
+  const letter = /^Key([A-Z])$/.exec(code)?.[1]
+  if (letter !== undefined) {
+    return [...modifiers, letter].join('+')
   }
-  if (/^F([1-9]|1\d|2[0-4])$/.test(key)) {
-    return [...modifiers, key].join('+')
+  const digit = /^Digit([0-9])$/.exec(code)?.[1]
+  if (digit !== undefined) {
+    return [...modifiers, digit].join('+')
   }
-  const mapped = NAMED_KEYS[key]
+  const numpad = /^Numpad([0-9])$/.exec(code)?.[1]
+  if (numpad !== undefined) {
+    return [...modifiers, `num${numpad}`].join('+')
+  }
+  if (/^F([1-9]|1\d|2[0-4])$/.test(code)) {
+    return [...modifiers, code].join('+')
+  }
+
+  const mapped = NAMED_KEYS[code]
   return mapped === undefined ? null : [...modifiers, mapped].join('+')
 }
 
@@ -93,7 +112,7 @@ function HotkeyField({
       setRecording(false)
       return
     }
-    const accelerator = eventToAccelerator(event)
+    const accelerator = codeToAccelerator(event)
     if (accelerator === null) {
       return
     }
@@ -116,7 +135,7 @@ function HotkeyField({
       }
     >
       {recording ? (
-        <span className="hotkey-recording">Press keys…</span>
+        <span className="hotkey-recording">Press Ctrl or Alt + a key…</span>
       ) : (
         <span className="hotkey-keys">{value ?? 'None'}</span>
       )}
@@ -173,6 +192,78 @@ function WorkflowIcon({ path }: { path: string | null }) {
   return <img className="workflow-icon" src={src} alt="" />
 }
 
+// Returns the program (exe path or process name) an action refers to, so the
+// chain can show that program's icon when one is involved.
+function actionProgramSource(action: AutomationAction): string | null {
+  switch (action.type) {
+    case 'start':
+      return action.executablePath.trim().length > 0 ? action.executablePath : null
+    case 'stop':
+    case 'restart':
+      return action.processName.trim().length > 0 ? action.processName : null
+    default:
+      return null
+  }
+}
+
+// Describes which icon the chain should try to show for an action: the icon of
+// the program it controls, or the favicon of the site it opens.
+function iconRequest(
+  action: AutomationAction,
+): { kind: 'program' | 'favicon'; value: string } | null {
+  const program = actionProgramSource(action)
+  if (program !== null) {
+    return { kind: 'program', value: program }
+  }
+  if (action.type === 'openUrl' && action.url.trim().length > 0) {
+    return { kind: 'favicon', value: action.url }
+  }
+  return null
+}
+
+function StepIcon({ action }: { action: AutomationAction }) {
+  const request = iconRequest(action)
+  const kind = request?.kind ?? null
+  const value = request?.value ?? null
+  const [loaded, setLoaded] = useState<{ value: string; src: string } | null>(null)
+
+  useEffect(() => {
+    if (kind === null || value === null) {
+      return
+    }
+    let cancelled = false
+    const promise =
+      kind === 'favicon'
+        ? window.api.favicons.get(value)
+        : window.api.icons.get(value)
+    void promise.then((dataUrl) => {
+      if (!cancelled) {
+        setLoaded(dataUrl === null ? null : { value, src: dataUrl })
+      }
+    })
+    return () => {
+      cancelled = true
+    }
+  }, [kind, value])
+
+  const hasProgramIcon = loaded !== null && loaded.value === value
+
+  if (hasProgramIcon && kind === 'program') {
+    return (
+      <span className="step-program-icon badged">
+        <img src={loaded.src} alt="" />
+        <span className="step-program-badge">
+          <ActionIcon kind={action.type} />
+        </span>
+      </span>
+    )
+  }
+  if (hasProgramIcon) {
+    return <img className="step-program-icon" src={loaded.src} alt="" />
+  }
+  return <ActionIcon kind={action.type} />
+}
+
 interface WorkflowEditorProps {
   initialName?: string
   initialSteps?: StepRow[]
@@ -203,6 +294,16 @@ function WorkflowEditor({
   const [steps, setSteps] = useState<StepRow[]>(initialSteps)
   const [iconPath, setIconPath] = useState<string | null>(initialIcon)
   const [hotkey, setHotkey] = useState<string | null>(initialHotkey)
+
+  // Programs referenced by "Start process" steps, offered as shortcuts when
+  // adding Stop/Restart steps so the same path is reused.
+  const startPaths = [
+    ...new Set(
+      steps
+        .filter((step) => step.kind === 'start' && step.value.trim().length > 0)
+        .map((step) => step.value.trim()),
+    ),
+  ]
 
   const updateStep = (index: number, patch: Partial<StepRow>): void => {
     setSteps((current) =>
@@ -247,7 +348,7 @@ function WorkflowEditor({
       <input
         id="workflow-name"
         type="text"
-        placeholder="Restart Discord & start Steam"
+        placeholder="e.g. Gaming, Work, Regular"
         value={name}
         onChange={(event) => setName(event.target.value)}
         disabled={busy}
@@ -277,8 +378,10 @@ function WorkflowEditor({
       <label htmlFor="workflow-hotkey">Hotkey (optional)</label>
       <HotkeyField value={hotkey} onChange={setHotkey} disabled={busy} />
       <p className="hotkey-hint">
-        Run this workflow from any app. The shortcut only works while
-        AutomationHub runs in the tray.
+        Click, then press the keys. The combination must include{' '}
+        <strong>Ctrl</strong> or <strong>Alt</strong>, e.g.{' '}
+        <kbd>Ctrl</kbd>+<kbd>9</kbd> or <kbd>Alt</kbd>+<kbd>M</kbd>. The
+        shortcut works while AutomationHub runs in the tray.
       </p>
 
       <ul className="workflow-steps">
@@ -319,7 +422,9 @@ function WorkflowEditor({
                 }
                 disabled={busy}
               />
-              {step.kind === 'start' && (
+              {(step.kind === 'start' ||
+                step.kind === 'stop' ||
+                step.kind === 'restart') && (
                 <button
                   type="button"
                   className="workflow-browse"
@@ -331,6 +436,26 @@ function WorkflowEditor({
                 </button>
               )}
             </div>
+            {(step.kind === 'stop' || step.kind === 'restart') &&
+              startPaths.length > 0 && (
+                <div className="workflow-suggestions">
+                  <span className="workflow-suggestions-label">
+                    From this workflow:
+                  </span>
+                  {startPaths.map((path) => (
+                    <button
+                      key={path}
+                      type="button"
+                      className="workflow-suggestion"
+                      onClick={() => updateStep(index, { value: path })}
+                      disabled={busy}
+                      title={path}
+                    >
+                      {displayName(path)}
+                    </button>
+                  ))}
+                </div>
+              )}
           </li>
         ))}
       </ul>
@@ -486,7 +611,7 @@ function Workflows() {
                 <ol className="workflow-summary">
                   {workflow.actions.map((action, index) => (
                     <li key={index} className="workflow-summary-step">
-                      <ActionIcon kind={action.type} />
+                      <StepIcon action={action} />
                       <span>
                         {index + 1}. {describeActionShort(action)}
                       </span>

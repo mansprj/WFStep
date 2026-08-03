@@ -2,13 +2,25 @@ import { exec } from 'node:child_process'
 import { setTimeout as delay } from 'node:timers/promises'
 import { promisify } from 'node:util'
 import { shell } from 'electron'
-import { killProcess, launchProcess, restartProcess } from '../processManager'
+import {
+  killProcess,
+  killProcessByExe,
+  launchProcess,
+  restartExe,
+  restartProcess,
+} from '../processManager'
 import type { AutomationAction } from '@shared/actions'
 import type { ActionResult } from '@shared/types'
 
 const execAsync = promisify(exec)
 
 const URL_PATTERN = /^https?:\/\//i
+
+// A value containing a path separator is treated as an executable path;
+// otherwise it is treated as a process name (as shown in Task Manager).
+function isExecutablePath(value: string): boolean {
+  return value.includes('\\') || value.includes('/')
+}
 
 function errorMessage(error: unknown): string {
   return error instanceof Error ? error.message : String(error)
@@ -52,9 +64,13 @@ export async function executeAction(action: AutomationAction): Promise<ActionRes
     case 'start':
       return launchProcess(action.executablePath)
     case 'stop':
-      return killProcess(action.processName)
+      return isExecutablePath(action.processName)
+        ? killProcessByExe(action.processName)
+        : killProcess(action.processName)
     case 'restart':
-      return restartProcess(action.processName)
+      return isExecutablePath(action.processName)
+        ? restartExe(action.processName)
+        : restartProcess(action.processName)
     case 'delay':
       await delay(action.ms)
       return { success: true, message: `Delayed for ${action.ms} ms.` }

@@ -14,8 +14,8 @@ export const KIND_LABELS: Record<ActionKind, string> = {
 
 export const KIND_PLACEHOLDERS: Record<ActionKind, string> = {
   start: 'C:\\Path\\To\\App.exe',
-  stop: 'Process name (e.g. Discord)',
-  restart: 'Process name (e.g. Discord)',
+  stop: 'Executable path or process name (e.g. Discord)',
+  restart: 'Executable path or process name (e.g. Discord)',
   delay: 'Milliseconds (e.g. 2000)',
   shell: 'Command (e.g. echo hello)',
   openUrl: 'https://example.com',
@@ -24,8 +24,8 @@ export const KIND_PLACEHOLDERS: Record<ActionKind, string> = {
 
 export const KIND_HELP: Record<ActionKind, string> = {
   start: 'Launch an executable file.',
-  stop: 'Force stop a running process by name.',
-  restart: 'Restart a running process by name.',
+  stop: 'Stop a running program by executable path or process name.',
+  restart: 'Restart a running program by executable path or process name.',
   delay: 'Wait the given number of milliseconds.',
   shell: 'Run a shell command.',
   openUrl: 'Open a web address (http/https only).',

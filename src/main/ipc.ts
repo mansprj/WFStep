@@ -1,9 +1,10 @@
-import { app, ipcMain } from 'electron'
+import { app, ipcMain, net } from 'electron'
 import { existsSync, readFileSync } from 'node:fs'
 import { extname } from 'node:path'
 import { selectExecutable, selectImage } from './dialogs'
 import { addApp, listApps, removeApp, updateApp } from './appsManager'
 import {
+  findProcessPath,
   getProcessStatus,
   killProcess,
   killProcessByExe,
@@ -33,6 +34,73 @@ const IMAGE_EXTENSIONS: Record<string, string> = {
   '.ico': 'image/x-icon',
 }
 
+async function iconForFile(filePath: string): Promise<string | null> {
+  const mime = IMAGE_EXTENSIONS[extname(filePath).toLowerCase()]
+  if (mime !== undefined) {
+    try {
+      const data = readFileSync(filePath)
+      return `data:${mime};base64,${data.toString('base64')}`
+    } catch {
+      return null
+    }
+  }
+  try {
+    const image = await app.getFileIcon(filePath, { size: 'large' })
+    return image.isEmpty() ? null : image.toDataURL()
+  } catch {
+    return null
+  }
+}
+
+async function fetchDataUrl(
+  url: string,
+  mime: string,
+  timeoutMs: number,
+): Promise<string | null> {
+  const controller = new AbortController()
+  const timer = setTimeout(() => controller.abort(), timeoutMs)
+  try {
+    const response = await net.fetch(url, { signal: controller.signal })
+    if (!response.ok) {
+      return null
+    }
+    const buffer = Buffer.from(await response.arrayBuffer())
+    if (buffer.length === 0) {
+      return null
+    }
+    return `data:${mime};base64,${buffer.toString('base64')}`
+  } catch {
+    return null
+  } finally {
+    clearTimeout(timer)
+  }
+}
+
+// Website favicon for the openUrl action. Tries Google's favicon service first,
+// then the origin's favicon.ico. Returns null when the site has no icon.
+async function faviconForUrl(url: string): Promise<string | null> {
+  let parsed: URL
+  try {
+    parsed = new URL(url)
+  } catch {
+    return null
+  }
+  if (parsed.hostname.length === 0) {
+    return null
+  }
+
+  const fromService = await fetchDataUrl(
+    `https://www.google.com/s2/favicons?domain=${encodeURIComponent(parsed.hostname)}&sz=64`,
+    'image/png',
+    5000,
+  )
+  if (fromService !== null) {
+    return fromService
+  }
+
+  return fetchDataUrl(`${parsed.origin}/favicon.ico`, 'image/x-icon', 5000)
+}
+
 export function registerIpcHandlers(): void {
   ipcMain.handle('process:status', (_event, processName: string) =>
     getProcessStatus(processName),
@@ -54,29 +122,27 @@ export function registerIpcHandlers(): void {
   )
   ipcMain.handle('dialog:selectExecutable', () => selectExecutable())
   ipcMain.handle('dialog:selectImage', () => selectImage())
-  ipcMain.handle('icon:get', async (_event, filePath: unknown) => {
-    if (typeof filePath !== 'string' || filePath.trim().length === 0) {
+  ipcMain.handle('icon:get', async (_event, value: unknown) => {
+    if (typeof value !== 'string' || value.trim().length === 0) {
       return null
     }
-    const path = filePath.trim()
-    if (!existsSync(path)) {
+    const input = value.trim()
+    if (existsSync(input)) {
+      return iconForFile(input)
+    }
+    // Not a path on disk: treat it as a running process name and resolve
+    // its executable to extract the icon (like Task Manager does).
+    const exePath = await findProcessPath(input)
+    if (exePath === null) {
       return null
     }
-    const mime = IMAGE_EXTENSIONS[extname(path).toLowerCase()]
-    if (mime !== undefined) {
-      try {
-        const data = readFileSync(path)
-        return `data:${mime};base64,${data.toString('base64')}`
-      } catch {
-        return null
-      }
-    }
-    try {
-      const image = await app.getFileIcon(path, { size: 'large' })
-      return image.isEmpty() ? null : image.toDataURL()
-    } catch {
+    return iconForFile(exePath)
+  })
+  ipcMain.handle('favicon:get', (_event, value: unknown) => {
+    if (typeof value !== 'string' || !/^https?:\/\//i.test(value.trim())) {
       return null
     }
+    return faviconForUrl(value.trim())
   })
   ipcMain.handle('action:run', (_event, value: unknown) => {
     if (!isAutomationAction(value)) {

@@ -93,15 +93,15 @@ function AppForm({
   )
 }
 
-function AppIcon({ path }: { path: string | null }) {
+function AppIcon({ source }: { source: string | null }) {
   const [src, setSrc] = useState<string | null>(null)
 
   useEffect(() => {
-    if (path === null) {
+    if (source === null) {
       return
     }
     let cancelled = false
-    void window.api.icons.get(path).then((dataUrl) => {
+    void window.api.icons.get(source).then((dataUrl) => {
       if (!cancelled) {
         setSrc(dataUrl)
       }
@@ -109,10 +109,30 @@ function AppIcon({ path }: { path: string | null }) {
     return () => {
       cancelled = true
     }
-  }, [path])
+  }, [source])
 
-  if (path === null || src === null) {
-    return null
+  if (src === null) {
+    return (
+      <span className="app-icon default" title="No icon">
+        <svg viewBox="0 0 16 16" fill="none">
+          <rect
+            x="3"
+            y="2.5"
+            width="10"
+            height="11"
+            rx="1.5"
+            stroke="currentColor"
+            strokeWidth="1.4"
+          />
+          <path
+            d="M5.5 6h5M5.5 8.5h5M5.5 11h3"
+            stroke="currentColor"
+            strokeWidth="1.4"
+            strokeLinecap="round"
+          />
+        </svg>
+      </span>
+    )
   }
   return <img className="app-icon" src={src} alt="" />
 }
@@ -237,7 +257,10 @@ function Applications() {
                 <>
                   <div className="app-info">
                     <span className="app-name-row">
-                      <AppIcon key={app.executablePath ?? 'none'} path={app.executablePath} />
+                      <AppIcon
+                        key={app.executablePath ?? app.processName ?? 'none'}
+                        source={app.executablePath ?? app.processName}
+                      />
                       <span className="app-name">{app.name}</span>
                     </span>
                     {app.executablePath !== null && (

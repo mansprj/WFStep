@@ -19,6 +19,9 @@ const api = {
   icons: {
     get: (path: string) => ipcRenderer.invoke('icon:get', path),
   },
+  favicons: {
+    get: (url: string) => ipcRenderer.invoke('favicon:get', url),
+  },
   actions: {
     run: (action: AutomationAction) => ipcRenderer.invoke('action:run', action),
   },

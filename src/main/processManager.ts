@@ -22,7 +22,7 @@ function errorMessage(error: unknown): string {
 
 // Resolves the executable path of a running Windows process by name.
 // Returns null when the process is not running.
-async function findProcessPath(processName: string): Promise<string | null> {
+export async function findProcessPath(processName: string): Promise<string | null> {
   const escapedName = processName.replace(/'/g, "''")
   const script =
     `Get-Process -Name '${escapedName}' -ErrorAction SilentlyContinue ` +

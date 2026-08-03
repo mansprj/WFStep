@@ -26,6 +26,9 @@ declare global {
       icons: {
         get: (path: string) => Promise<string | null>
       }
+      favicons: {
+        get: (url: string) => Promise<string | null>
+      }
       actions: {
         run: (action: AutomationAction) => Promise<ActionResult>
       }
