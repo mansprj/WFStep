@@ -15,6 +15,10 @@ let updateStatus: UpdateStatus = 'idle'
 
 function log(msg: string): void {
   console.log(`[updater] ${msg}`)
+  if (mainWindow && !mainWindow.isDestroyed()) {
+    const escaped = JSON.stringify(`[updater] ${msg}`)
+    mainWindow.webContents.executeJavaScript(`console.log(${escaped})`)
+  }
 }
 
 function pushUpdateStatus(): void {
@@ -162,10 +166,10 @@ if (!app.requestSingleInstanceLock()) {
   })
 
   app.whenReady().then(() => {
-    setupAutoUpdater()
     registerIpcHandlers()
     refreshHotkeys()
     createWindow()
+    setupAutoUpdater()
     createTray()
 
     app.on('activate', () => {

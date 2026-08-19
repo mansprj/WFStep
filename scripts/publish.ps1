@@ -47,8 +47,6 @@ try {
   Write-Host "electron-builder publish had errors, will fix via API..." -ForegroundColor Yellow
 }
 
-Remove-Item Env:GH_TOKEN -ErrorAction SilentlyContinue
-
 # --- Resolve version & release ---
 $version = (Get-Content -LiteralPath 'package.json' | ConvertFrom-Json).version
 $tag = "v$version"
@@ -112,3 +110,5 @@ $final = Invoke-RestMethod -Uri "https://api.github.com/repos/mansprj/WFStep/rel
 $finalNames = ($final.assets | ForEach-Object { $_.name }) -join ', '
 Write-Host "`nRelease $tag: $finalNames" -ForegroundColor Green
 Write-Host "Done. $uploaded asset(s) uploaded." -ForegroundColor Green
+
+Remove-Item Env:GH_TOKEN -ErrorAction SilentlyContinue
