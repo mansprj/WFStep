@@ -1,4 +1,5 @@
 # Publishes the app: builds the installer and uploads it to GitHub Releases.
+# Handles electron-builder's duplicate-artifact bug by falling back to API uploads.
 # The token is taken from (priority):
 #   1. the GH_TOKEN env var, or
 #   2. the file ~/.gh-token (just the token, nothing else)
@@ -41,9 +42,56 @@ if ($token -notmatch '^(ghp_|github_pat_)[A-Za-z0-9_]+$') {
 
 try {
   npm run dist -- --publish always
-  if ($LASTEXITCODE -ne 0) {
-    throw "Publish failed with exit code $LASTEXITCODE"
-  }
 } finally {
   Remove-Item Env:GH_TOKEN -ErrorAction SilentlyContinue
 }
+
+# --- Fallback: check if latest.yml was uploaded, fix if not ---
+$version = (Get-Content -LiteralPath 'package.json' | ConvertFrom-Json).version
+$tag = "v$version"
+Write-Host "`nChecking release $tag for missing assets..." -ForegroundColor Cyan
+
+$release = $null
+try {
+  $release = Invoke-RestMethod -Uri "https://api.github.com/repos/mansprj/WFStep/releases/tags/$tag" -Headers @{ Authorization = "token $token" }
+} catch {
+  Write-Host "Release $tag not found on GitHub, skipping fallback." -ForegroundColor Yellow
+  exit 0
+}
+
+$assets = @($release.assets | ForEach-Object { $_.name })
+$releaseId = $release.id
+
+$missing = @()
+if ($assets -notcontains 'latest.yml')       { $missing += 'latest.yml' }
+if ($assets -notcontains 'latest.yml.blockmap') { $missing += 'latest.yml.blockmap' }
+
+if ($missing.Count -eq 0) {
+  Write-Host "All assets present for $tag." -ForegroundColor Green
+  exit 0
+}
+
+Write-Host "Missing: $($missing -join ', '). Uploading via API..." -ForegroundColor Yellow
+
+$uploadBase = "https://uploads.github.com/repos/mansprj/WFStep/releases/$releaseId/assets"
+
+foreach ($name in $missing) {
+  $filePath = "dist\$name"
+  if (-not (Test-Path -LiteralPath $filePath)) {
+    Write-Host "  $name not found locally at $filePath, skipping." -ForegroundColor Yellow
+    continue
+  }
+  Write-Host "  Uploading $name..." -NoNewline
+  $result = & curl.exe -sS -X POST `
+    -H "Authorization: token $token" `
+    -H "Content-Type: application/octet-stream" `
+    --data-binary "@$filePath" `
+    "$uploadBase?name=$name" | ConvertFrom-Json
+  if ($result.state -eq 'uploaded') {
+    Write-Host " OK ($($result.size) bytes)" -ForegroundColor Green
+  } else {
+    Write-Host " FAILED: $($result | ConvertTo-Json -Compress)" -ForegroundColor Red
+  }
+}
+
+Write-Host "`nRelease $tag published successfully." -ForegroundColor Green

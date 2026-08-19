@@ -13,6 +13,10 @@ let tray: Tray | null = null
 let isQuitting = false
 let updateStatus: UpdateStatus = 'idle'
 
+function log(msg: string): void {
+  console.log(`[updater] ${msg}`)
+}
+
 function pushUpdateStatus(): void {
   if (mainWindow && !mainWindow.isDestroyed()) {
     mainWindow.webContents.send('update:status', updateStatus)
@@ -63,6 +67,7 @@ function setupAutoUpdater(): void {
   if (!app.isPackaged) return
 
   autoUpdater.autoDownload = false
+  autoUpdater.logger = { info: (m) => log(String(m)), warn: (m) => log(`WARN: ${m}`), error: (m) => log(`ERROR: ${m}`), debug: (m) => log(String(m)) }
 
   ipcMain.on('updates:download', () => {
     autoUpdater.downloadUpdate()
@@ -72,6 +77,7 @@ function setupAutoUpdater(): void {
   })
 
   autoUpdater.on('update-available', async () => {
+    log('update available')
     updateStatus = 'available'
     pushUpdateStatus()
     const { response } = await dialog.showMessageBox({
@@ -89,6 +95,7 @@ function setupAutoUpdater(): void {
   })
 
   autoUpdater.on('update-downloaded', async () => {
+    log('update downloaded')
     updateStatus = 'downloaded'
     pushUpdateStatus()
     const { response } = await dialog.showMessageBox({
@@ -105,11 +112,24 @@ function setupAutoUpdater(): void {
     }
   })
 
-  autoUpdater.on('error', () => {
-    // Ignore update errors silently — the app must keep working regardless.
+  autoUpdater.on('update-not-available', () => {
+    log('no update available')
   })
 
-  autoUpdater.checkForUpdates().catch(() => {})
+  autoUpdater.on('error', (err) => {
+    log(`error: ${err.message}`)
+  })
+
+  log(`current version: ${app.getVersion()}`)
+  autoUpdater.checkForUpdates().catch((err) => {
+    log(`checkForUpdates failed: ${err.message}`)
+  })
+
+  setInterval(() => {
+    autoUpdater.checkForUpdates().catch((err) => {
+      log(`periodic check failed: ${err.message}`)
+    })
+  }, 60 * 60 * 1000)
 }
 
 function createTray(): void {
