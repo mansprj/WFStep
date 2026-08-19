@@ -53,6 +53,10 @@ declare global {
           callback: (progress: WorkflowProgress) => void,
         ) => () => void
       }
+      settings: {
+        get: () => Promise<{ autostart: boolean }>
+        set: (value: Partial<{ autostart: boolean }>) => Promise<{ autostart: boolean }>
+      }
     }
   }
 }

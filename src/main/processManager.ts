@@ -1,6 +1,6 @@
 import { execFile, execFileSync, spawn } from 'node:child_process'
-import { existsSync, statSync } from 'node:fs'
-import { basename } from 'node:path'
+import { existsSync, readdirSync, statSync } from 'node:fs'
+import { basename, dirname, join } from 'node:path'
 import { TextDecoder } from 'node:util'
 import { promisify } from 'node:util'
 import type { ActionResult, ProcessStatus } from '@shared/types'
@@ -147,8 +147,43 @@ export async function killProcess(processName: string): Promise<ActionResult> {
   return stopByImageName(`${processName}.exe`, processName)
 }
 
+// Discord-style apps auto-update into new versioned folders (e.g. app-1.0.9253),
+// which breaks saved absolute paths. If the exact path is missing, look for the
+// same executable inside sibling subdirectories of the parent folder and pick
+// the newest one; otherwise return the original path unchanged.
+export function resolveExecutable(exePath: string): string {
+  const exact = exePath.trim()
+  if (existsSync(exact)) {
+    return exact
+  }
+
+  const parent = dirname(exact)
+  const exeName = basename(exact)
+  let best: string | null = null
+  let bestTime = 0
+  try {
+    for (const entry of readdirSync(parent, { withFileTypes: true })) {
+      if (!entry.isDirectory()) {
+        continue
+      }
+      const candidate = join(parent, entry.name, exeName)
+      if (!existsSync(candidate)) {
+        continue
+      }
+      const mtime = statSync(candidate).mtimeMs
+      if (mtime > bestTime) {
+        bestTime = mtime
+        best = candidate
+      }
+    }
+  } catch {
+    return exact
+  }
+  return best ?? exact
+}
+
 export async function launchProcess(exePath: string): Promise<ActionResult> {
-  const path = exePath.trim()
+  const path = resolveExecutable(exePath)
   if (path.length === 0) {
     return { success: false, message: 'Executable path is empty.' }
   }
@@ -206,7 +241,7 @@ export async function restartProcess(processName: string): Promise<ActionResult>
 // Kills every running instance of the executable by its image name, so the
 // restart/stop of a saved app does not depend on a hand-typed process name.
 export async function killProcessByExe(exePath: string): Promise<ActionResult> {
-  const path = exePath.trim()
+  const path = resolveExecutable(exePath)
   if (path.length === 0) {
     return { success: false, message: 'Executable path is empty.' }
   }
@@ -221,7 +256,7 @@ export async function killProcessByExe(exePath: string): Promise<ActionResult> {
 // Restarts an app by its executable path: kills any running instance (if any)
 // and launches the executable again.
 export async function restartExe(exePath: string): Promise<ActionResult> {
-  const path = exePath.trim()
+  const path = resolveExecutable(exePath)
   if (path.length === 0) {
     return { success: false, message: 'Executable path is empty.' }
   }

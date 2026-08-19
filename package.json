@@ -1,12 +1,15 @@
 {
-  "name": "automationhub--temporary-name-",
+  "name": "wfstep",
+  "version": "1.0.2",
+  "description": "Workflow automation runner with hotkeys and system tray",
+  "author": "mansprj",
   "private": true,
-  "version": "0.0.0",
   "type": "module",
   "main": "./out/main/index.js",
   "scripts": {
     "dev": "electron-vite dev",
     "build": "npm run typecheck && electron-vite build",
+    "dist": "npm run typecheck && electron-vite build && electron-builder",
     "start": "electron-vite preview",
     "typecheck": "npm run typecheck:node && npm run typecheck:web",
     "typecheck:node": "tsc --noEmit -p tsconfig.node.json --composite false",
@@ -14,6 +17,7 @@
     "lint": "eslint ."
   },
   "dependencies": {
+    "electron-updater": "^6.8.9",
     "react": "^19.2.7",
     "react-dom": "^19.2.7"
   },
@@ -24,6 +28,7 @@
     "@types/react-dom": "^19.2.3",
     "@vitejs/plugin-react": "^6.0.3",
     "electron": "^43.2.0",
+    "electron-builder": "^26.15.3",
     "electron-vite": "^6.0.0-beta.1",
     "eslint": "^10.6.0",
     "eslint-plugin-react-hooks": "^7.1.1",

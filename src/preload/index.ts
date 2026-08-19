@@ -67,6 +67,11 @@ const api = {
       }
     },
   },
+  settings: {
+    get: () => ipcRenderer.invoke('settings:get'),
+    set: (value: Partial<{ autostart: boolean }>) =>
+      ipcRenderer.invoke('settings:set', value),
+  },
 }
 
 contextBridge.exposeInMainWorld('api', api)

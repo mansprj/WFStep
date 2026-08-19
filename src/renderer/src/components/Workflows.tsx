@@ -430,7 +430,7 @@ function WorkflowEditor({
         Click, then press the keys. The combination must include{' '}
         <strong>Ctrl</strong> or <strong>Alt</strong>, e.g.{' '}
         <kbd>Ctrl</kbd>+<kbd>9</kbd> or <kbd>Alt</kbd>+<kbd>M</kbd>. The
-        shortcut works while AutomationHub runs in the tray.
+        shortcut works while WF Step runs in the tray.
       </p>
 
       <ul className="workflow-steps">

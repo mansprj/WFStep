@@ -1,14 +1,14 @@
-# AutomationHub
+# WF Step
 
 ## Project Status
 
 Current stage: Phase 5 (Global Hotkeys) complete. Workflows can be assigned a global hotkey (recorded in the editor), the app runs in the system tray (close hides instead of quitting, Quit is in the tray menu), and hotkeys run workflows from anywhere via globalShortcut. Progress events broadcast to all windows. Conflict/invalid shortcuts are reported on save.
 
-Git repository is initialized and pushed to GitHub (mansprj/AutomationHub). Changes are committed and pushed after each task.
+Git repository is initialized and pushed to GitHub (mansprj/WFStep). Changes are committed and pushed after each task.
 
 ## Goal
 
-AutomationHub is a Windows desktop application that allows users to automate repetitive desktop actions through a clean graphical interface.
+WF Step is a Windows desktop application that allows users to automate repetitive desktop actions through a clean graphical interface.
 
 The application should eventually support:
 
@@ -71,7 +71,7 @@ Completed
 - Electron Main Process created
 - Preload Script created
 - First desktop window launches
-- Git repository initialized and pushed to GitHub (mansprj/AutomationHub)
+- Git repository initialized and pushed to GitHub (mansprj/WFStep)
 - Phase 1: Foundation (window, preload, IPC, HMR)
 - Phase 2: Process Management (status / kill / restart / launch via process:* IPC channels)
 - Phase 3: Automation Actions (shared AutomationAction type with runtime guard, executor in main, action:run channel, renderer ActionRunner panel, @shared alias)
@@ -123,7 +123,7 @@ This feature validates the complete application architecture.
 
 ## Long-Term Vision
 
-AutomationHub should evolve into a desktop automation platform rather than a collection of scripts.
+WF Step should evolve into a desktop automation platform rather than a collection of scripts.
 
 Every feature should be modular.
 

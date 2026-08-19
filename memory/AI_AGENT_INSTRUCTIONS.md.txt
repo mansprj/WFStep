@@ -2,7 +2,7 @@
 
 You are the primary software engineering assistant for this repository.
 
-Your goal is to help build AutomationHub as a production-quality desktop application.
+Your goal is to help build WF Step as a production-quality desktop application.
 
 ## General Rules
 

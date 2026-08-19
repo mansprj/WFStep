@@ -1,0 +1,25 @@
+appId: com.wfstep.app
+publish:
+  provider: github
+  owner: mansprj
+  repo: WFStep
+  releaseType: release
+directories:
+  buildResources: build
+  output: dist
+files:
+  - out/**
+  - resources/**
+  - package.json
+asar: true
+win:
+  target:
+    - nsis
+  icon: build/icon.png
+nsis:
+  oneClick: false
+  allowToChangeInstallationDirectory: true
+  createDesktopShortcut: true
+  createStartMenuShortcut: true
+  shortcutName: wfstep
+  runAfterFinish: true

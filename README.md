@@ -1,6 +1,6 @@
-# AutomationHub
+# WF Step
 
-AutomationHub is a Windows desktop application for automating repetitive desktop tasks through a clean graphical interface.
+WF Step is a Windows desktop application for automating repetitive desktop tasks through a clean graphical interface.
 
 ## Current Features
 
