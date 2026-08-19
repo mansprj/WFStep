@@ -9,12 +9,10 @@ function App() {
   return (
     <div className="app">
       <div className="app-header">
-        <div>
-          <h1>WF Step</h1>
-          <p className="subtitle">Workflows & action runner</p>
-        </div>
+        <h1>WF Step</h1>
         <UpdateIndicator />
       </div>
+      <p className="subtitle">Workflows & action runner</p>
 
       <Workflows />
       <ActionRunner />
