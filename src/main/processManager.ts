@@ -225,17 +225,8 @@ export async function restartProcess(processName: string): Promise<ActionResult>
     return { success: false, message: `${processName} is not running.` }
   }
 
-  const killResult = await killProcess(processName)
-  if (!killResult.success) {
-    return killResult
-  }
-
-  const launchResult = await launchProcess(exePath)
-  if (!launchResult.success) {
-    return launchResult
-  }
-
-  return { success: true, message: `${processName} was restarted.` }
+  // Delegate to restartExe which handles explorer.exe gracefully.
+  return restartExe(exePath)
 }
 
 // Kills every running instance of the executable by its image name, so the
@@ -271,6 +262,28 @@ export async function restartExe(exePath: string): Promise<ActionResult> {
   }
 
   const imageName = basename(path)
+
+  // explorer.exe is the Windows shell — killing it forcefully causes a black
+  // screen. Use a graceful shutdown (no /F flag) and wait for the process to
+  // exit before relaunching.
+  if (imageName.toLowerCase() === 'explorer.exe') {
+    try {
+      await execFileAsync('taskkill', ['/IM', 'explorer.exe'], {
+        encoding: 'buffer',
+        windowsHide: true,
+      })
+    } catch {
+      // Ignore — explorer may already be gone.
+    }
+    // Wait for the shell to release resources before relaunching.
+    await new Promise((r) => setTimeout(r, 800))
+    const launchResult = await launchProcess(path)
+    if (!launchResult.success) {
+      return launchResult
+    }
+    return { success: true, message: 'explorer.exe was restarted.' }
+  }
+
   const killResult = await stopByImageName(imageName, imageName)
   if (!killResult.success) {
     return killResult

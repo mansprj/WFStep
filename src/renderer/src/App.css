@@ -18,9 +18,10 @@
 
 .app-header {
   width: 100%;
+  position: relative;
   display: flex;
-  align-items: flex-start;
-  justify-content: space-between;
+  justify-content: center;
+  align-items: center;
 }
 
 .subtitle {
@@ -722,6 +723,9 @@ button.secondary:disabled {
 }
 
 .update-indicator {
+  position: absolute;
+  right: 0;
+  top: 4px;
   display: flex;
   align-items: center;
   justify-content: center;
@@ -729,7 +733,6 @@ button.secondary:disabled {
   height: 32px;
   border-radius: 50%;
   flex-shrink: 0;
-  margin-top: 8px;
 }
 
 .update-indicator.up-to-date {
