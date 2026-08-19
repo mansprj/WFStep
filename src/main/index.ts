@@ -1,4 +1,4 @@
-import { app, BrowserWindow, dialog, Menu, nativeImage, Tray } from 'electron'
+import { app, BrowserWindow, dialog, ipcMain, Menu, nativeImage, Tray } from 'electron'
 import { join } from 'node:path'
 import electronUpdater from 'electron-updater'
 import { registerIpcHandlers } from './ipc'
@@ -6,9 +6,18 @@ import { clearHotkeys, refreshHotkeys } from './hotkeyManager'
 
 const { autoUpdater } = electronUpdater
 
+type UpdateStatus = 'idle' | 'available' | 'downloaded'
+
 let mainWindow: BrowserWindow | null = null
 let tray: Tray | null = null
 let isQuitting = false
+let updateStatus: UpdateStatus = 'idle'
+
+function pushUpdateStatus(): void {
+  if (mainWindow && !mainWindow.isDestroyed()) {
+    mainWindow.webContents.send('update:status', updateStatus)
+  }
+}
 
 function createWindow(): void {
   mainWindow = new BrowserWindow({
@@ -55,7 +64,16 @@ function setupAutoUpdater(): void {
 
   autoUpdater.autoDownload = false
 
+  ipcMain.on('updates:download', () => {
+    autoUpdater.downloadUpdate()
+  })
+  ipcMain.on('updates:install', () => {
+    autoUpdater.quitAndInstall()
+  })
+
   autoUpdater.on('update-available', async () => {
+    updateStatus = 'available'
+    pushUpdateStatus()
     const { response } = await dialog.showMessageBox({
       type: 'info',
       title: 'Доступно обновление',
@@ -71,6 +89,8 @@ function setupAutoUpdater(): void {
   })
 
   autoUpdater.on('update-downloaded', async () => {
+    updateStatus = 'downloaded'
+    pushUpdateStatus()
     const { response } = await dialog.showMessageBox({
       type: 'info',
       title: 'Обновление готово',

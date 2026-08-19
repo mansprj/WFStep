@@ -72,6 +72,19 @@ const api = {
     set: (value: Partial<{ autostart: boolean }>) =>
       ipcRenderer.invoke('settings:set', value),
   },
+  updates: {
+    download: () => ipcRenderer.send('updates:download'),
+    install: () => ipcRenderer.send('updates:install'),
+    onStatus: (callback: (status: string) => void) => {
+      const listener = (_event: Electron.IpcRendererEvent, status: string): void => {
+        callback(status)
+      }
+      ipcRenderer.on('update:status', listener)
+      return () => {
+        ipcRenderer.removeListener('update:status', listener)
+      }
+    },
+  },
 }
 
 contextBridge.exposeInMainWorld('api', api)

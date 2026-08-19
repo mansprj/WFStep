@@ -16,6 +16,13 @@
   letter-spacing: -1px;
 }
 
+.app-header {
+  width: 100%;
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+}
+
 .subtitle {
   color: var(--text-dim);
   margin-top: -16px;
@@ -712,4 +719,46 @@ button.secondary:disabled {
 
 .toggle-switch.on .toggle-knob {
   transform: translateX(20px);
+}
+
+.update-indicator {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 32px;
+  height: 32px;
+  border-radius: 50%;
+  flex-shrink: 0;
+  margin-top: 8px;
+}
+
+.update-indicator.up-to-date {
+  color: var(--success);
+}
+
+.update-indicator.has-update,
+.update-indicator.ready-to-install {
+  cursor: pointer;
+  position: relative;
+  color: var(--text-dim);
+  transition: color 0.2s;
+}
+
+.update-indicator.has-update:hover,
+.update-indicator.ready-to-install:hover {
+  color: var(--text);
+}
+
+.update-dot {
+  position: absolute;
+  top: 2px;
+  right: 2px;
+  width: 10px;
+  height: 10px;
+  border-radius: 50%;
+  background: var(--error);
+}
+
+.update-dot.ready {
+  background: #facc15;
 }

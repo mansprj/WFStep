@@ -57,6 +57,11 @@ declare global {
         get: () => Promise<{ autostart: boolean }>
         set: (value: Partial<{ autostart: boolean }>) => Promise<{ autostart: boolean }>
       }
+      updates: {
+        download: () => void
+        install: () => void
+        onStatus: (callback: (status: string) => void) => () => void
+      }
     }
   }
 }
