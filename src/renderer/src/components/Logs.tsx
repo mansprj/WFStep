@@ -50,7 +50,11 @@ function Logs() {
             >
               <span className="log-time">{formatTime(entry.timestamp)}</span>
               <span className={`log-badge ${entry.source}`}>
-                {entry.source === 'workflow' ? 'Workflow' : 'Action'}
+                {entry.source === 'workflow'
+                  ? 'Workflow'
+                  : entry.source === 'macro'
+                    ? 'Macro'
+                    : 'Action'}
               </span>
               <span className="log-context" title={entry.context}>
                 {entry.context}

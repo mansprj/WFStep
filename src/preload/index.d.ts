@@ -7,6 +7,14 @@ import type {
   WorkflowMutationResult,
   WorkflowProgress,
 } from '@shared/workflows'
+import type {
+  Macro,
+  MacroInput,
+  MacroMutationResult,
+  MacroState,
+  MacroStep,
+  PlaybackConfig,
+} from '@shared/macros'
 
 declare global {
   interface Window {
@@ -54,8 +62,53 @@ declare global {
         ) => () => void
       }
       settings: {
-        get: () => Promise<{ autostart: boolean }>
-        set: (value: Partial<{ autostart: boolean }>) => Promise<{ autostart: boolean }>
+        get: () => Promise<{
+          autostart: boolean
+          theme: string
+          commandHotkeys: {
+            record: string | null
+            stop: string | null
+            discard: string | null
+            play: string | null
+            stopPlayback: string | null
+          }
+        }>
+        set: (value: Partial<{
+          autostart: boolean
+          theme: string
+          commandHotkeys: Partial<{
+            record: string | null
+            stop: string | null
+            discard: string | null
+            play: string | null
+            stopPlayback: string | null
+          }>
+        }>) => Promise<{
+          autostart: boolean
+          theme: string
+          commandHotkeys: {
+            record: string | null
+            stop: string | null
+            discard: string | null
+            play: string | null
+            stopPlayback: string | null
+          }
+        }>
+      }
+      macros: {
+        list: () => Promise<Macro[]>
+        add: (input: MacroInput) => Promise<MacroMutationResult>
+        update: (id: string, input: MacroInput) => Promise<MacroMutationResult>
+        remove: (id: string) => Promise<MacroMutationResult>
+        recordStart: () => Promise<{ success: boolean; message: string }>
+        recordStop: () => Promise<{ success: boolean; message: string }>
+        recordDiscard: () => Promise<{ success: boolean; message: string }>
+        pendingSteps: () => Promise<MacroStep[]>
+        state: () => Promise<MacroState>
+        playStart: (config: PlaybackConfig, steps: MacroStep[]) => Promise<{ success: boolean; message: string }>
+        playStop: () => Promise<{ success: boolean; message: string }>
+        onState: (callback: (state: MacroState) => void) => () => void
+        onNotice: (callback: (message: string) => void) => () => void
       }
       updates: {
         download: () => void

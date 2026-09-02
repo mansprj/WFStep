@@ -1,32 +1,84 @@
 .app {
   min-height: 100svh;
-  max-width: 480px;
+  max-width: 860px;
   margin: 0 auto;
   display: flex;
   flex-direction: column;
-  align-items: center;
-  gap: 24px;
-  padding: 40px 24px;
+  align-items: stretch;
+  gap: 20px;
+  padding: 24px 28px 48px;
   box-sizing: border-box;
 }
 
 .app h1 {
-  font-size: 40px;
+  font-size: 34px;
   font-weight: 600;
   letter-spacing: -1px;
+  margin: 0;
 }
 
 .app-header {
   width: 100%;
   position: relative;
   display: flex;
-  justify-content: center;
+  justify-content: space-between;
   align-items: center;
+}
+
+.app-heading {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
 }
 
 .subtitle {
   color: var(--text-dim);
-  margin-top: -16px;
+  margin: 0;
+  font-size: 13px;
+}
+
+.app-tabs {
+  display: flex;
+  gap: 4px;
+  border-bottom: 1px solid var(--border);
+  padding-bottom: 0;
+  flex-wrap: wrap;
+}
+
+.app-tab {
+  font: inherit;
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--text-dim);
+  background: transparent;
+  border: none;
+  border-bottom: 2px solid transparent;
+  border-radius: 8px 8px 0 0;
+  padding: 10px 16px;
+  cursor: pointer;
+  transition: color 0.15s, border-color 0.15s, background 0.15s;
+}
+
+.app-tab:hover {
+  color: var(--text);
+  background: var(--card-bg);
+}
+
+.app-tab.active {
+  color: var(--accent-strong);
+  border-bottom-color: var(--accent);
+}
+
+.app-tab:focus-visible {
+  outline: none;
+  color: var(--accent-strong);
+}
+
+.app-content {
+  width: 100%;
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
 }
 
 .field {
@@ -553,13 +605,17 @@ button.secondary:disabled {
 .actions button {
   font: inherit;
   font-weight: 600;
-  color: #16171d;
+  color: var(--on-accent);
   background: var(--accent);
   border: none;
   border-radius: 8px;
   padding: 10px 16px;
   cursor: pointer;
   flex: 1;
+}
+
+.actions button:hover {
+  background: var(--accent-strong);
 }
 
 .actions button:disabled {
@@ -640,6 +696,10 @@ button.secondary:disabled {
   color: var(--success);
 }
 
+.log-badge.macro {
+  color: var(--accent);
+}
+
 .log-context {
   flex-shrink: 0;
   font-weight: 600;
@@ -690,6 +750,32 @@ button.secondary:disabled {
   font-size: 13px;
 }
 
+.settings-section .settings-card + .settings-card {
+  margin-top: 12px;
+}
+
+.hotkey-command-list {
+  margin-top: 12px;
+  display: flex;
+  flex-direction: column;
+}
+
+.hotkey-command-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 8px 0;
+}
+
+.hotkey-command-row + .hotkey-command-row {
+  border-top: 1px solid var(--border);
+}
+
+.hotkey-command-label {
+  flex: 1;
+}
+
 .toggle-switch {
   position: relative;
   width: 44px;
@@ -720,6 +806,46 @@ button.secondary:disabled {
 
 .toggle-switch.on .toggle-knob {
   transform: translateX(20px);
+}
+
+.theme-picker {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+  gap: 8px;
+  margin-top: 12px;
+}
+
+.theme-option {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  text-align: left;
+  font: inherit;
+  color: var(--text);
+  background: var(--bg);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  padding: 10px 12px;
+  cursor: pointer;
+  transition: border-color 0.15s;
+}
+
+.theme-option:hover {
+  border-color: var(--accent);
+}
+
+.theme-option.active {
+  border-color: var(--accent);
+  box-shadow: 0 0 0 2px color-mix(in srgb, var(--accent) 25%, transparent);
+}
+
+.theme-option-label {
+  font-weight: 600;
+}
+
+.theme-option-hint {
+  color: var(--text-dim);
+  font-size: 12px;
 }
 
 .update-indicator {
@@ -764,4 +890,182 @@ button.secondary:disabled {
 
 .update-dot.ready {
   background: #facc15;
+}
+
+/* ---- Macros ---- */
+
+.macro-recorder {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px;
+  width: 100%;
+}
+
+.macro-recorder button {
+  font: inherit;
+  font-weight: 600;
+  color: var(--on-accent);
+  background: var(--accent);
+  border: none;
+  border-radius: 8px;
+  padding: 10px 16px;
+  cursor: pointer;
+}
+
+.macro-recorder button:hover {
+  background: var(--accent-strong);
+}
+
+.macro-recorder button:disabled {
+  opacity: 0.6;
+  cursor: default;
+}
+
+.macro-editor {
+  width: 100%;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  border-top: 1px solid var(--border);
+  padding-top: 12px;
+}
+
+.macro-editor-head {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.macro-editor-head label {
+  color: var(--text-dim);
+  font-size: 13px;
+  white-space: nowrap;
+}
+
+.macro-editor-head input {
+  flex: 1;
+  min-width: 0;
+}
+
+.macro-step-head {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.macro-step-label {
+  flex: 1;
+  min-width: 0;
+  font-size: 13px;
+  color: var(--text);
+  word-break: break-all;
+}
+
+.macro-step-head button {
+  font: inherit;
+  font-weight: 600;
+  color: var(--text);
+  background: var(--bg);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  padding: 0 12px;
+  cursor: pointer;
+}
+
+.macro-step-head button:hover {
+  border-color: var(--error);
+  color: var(--error);
+}
+
+.macro-step-head button:disabled {
+  opacity: 0.6;
+  cursor: default;
+}
+
+.macro-step-editor {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px;
+}
+
+.macro-step-delay,
+.macro-step-pair {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  color: var(--text-dim);
+  font-size: 12px;
+}
+
+.macro-step-delay input,
+.macro-step-pair input {
+  width: 64px;
+  font: inherit;
+  color: var(--text);
+  background: var(--bg);
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  padding: 4px 6px;
+}
+
+.macro-step-pair select {
+  font: inherit;
+  color: var(--text);
+  background: var(--bg);
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  padding: 4px 6px;
+}
+
+.macro-step-delay input:focus,
+.macro-step-pair input:focus,
+.macro-step-pair select:focus {
+  outline: none;
+  border-color: var(--accent);
+}
+
+.macro-step-key-label {
+  color: var(--text-dim);
+  font-size: 12px;
+  font-family: ui-monospace, SFMono-Regular, Consolas, monospace;
+}
+
+.macro-playback {
+  width: 100%;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  border-top: 1px solid var(--border);
+  padding-top: 12px;
+}
+
+.macro-label-row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  color: var(--text-dim);
+  font-size: 13px;
+}
+
+.macro-label-row input[type='range'] {
+  flex: 1;
+  min-width: 0;
+}
+
+.macro-label-row input[type='number'] {
+  font: inherit;
+  color: var(--text);
+  background: var(--bg);
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  padding: 4px 6px;
+}
+
+.macro-value {
+  min-width: 48px;
+  color: var(--text);
+  font-variant-numeric: tabular-nums;
+  text-align: right;
 }

@@ -2,6 +2,12 @@ import { contextBridge, ipcRenderer } from 'electron'
 import type { AutomationAction } from '@shared/actions'
 import type { LogEntry } from '@shared/logs'
 import type { WorkflowInput, WorkflowProgress } from '@shared/workflows'
+import type {
+  MacroInput,
+  MacroState,
+  MacroStep,
+  PlaybackConfig,
+} from '@shared/macros'
 
 const api = {
   process: {
@@ -69,8 +75,51 @@ const api = {
   },
   settings: {
     get: () => ipcRenderer.invoke('settings:get'),
-    set: (value: Partial<{ autostart: boolean }>) =>
+    set: (value: Partial<{
+      autostart: boolean
+      theme: string
+      commandHotkeys: Partial<{
+        record: string | null
+        stop: string | null
+        discard: string | null
+        play: string | null
+        stopPlayback: string | null
+      }>
+    }>) =>
       ipcRenderer.invoke('settings:set', value),
+  },
+  macros: {
+    list: () => ipcRenderer.invoke('macros:list'),
+    add: (input: MacroInput) => ipcRenderer.invoke('macros:add', input),
+    update: (id: string, input: MacroInput) =>
+      ipcRenderer.invoke('macros:update', id, input),
+    remove: (id: string) => ipcRenderer.invoke('macros:remove', id),
+    recordStart: () => ipcRenderer.invoke('macros:record:start'),
+    recordStop: () => ipcRenderer.invoke('macros:record:stop'),
+    recordDiscard: () => ipcRenderer.invoke('macros:record:discard'),
+    pendingSteps: () => ipcRenderer.invoke('macros:record:pending'),
+    state: () => ipcRenderer.invoke('macros:state'),
+    playStart: (config: PlaybackConfig, steps: MacroStep[]) =>
+      ipcRenderer.invoke('macros:play:start', config, steps),
+    playStop: () => ipcRenderer.invoke('macros:play:stop'),
+    onState: (callback: (state: MacroState) => void) => {
+      const listener = (_event: Electron.IpcRendererEvent, state: MacroState): void => {
+        callback(state)
+      }
+      ipcRenderer.on('macro:state', listener)
+      return () => {
+        ipcRenderer.removeListener('macro:state', listener)
+      }
+    },
+    onNotice: (callback: (message: string) => void) => {
+      const listener = (_event: Electron.IpcRendererEvent, message: string): void => {
+        callback(message)
+      }
+      ipcRenderer.on('macro:notice', listener)
+      return () => {
+        ipcRenderer.removeListener('macro:notice', listener)
+      }
+    },
   },
   updates: {
     download: () => ipcRenderer.send('updates:download'),

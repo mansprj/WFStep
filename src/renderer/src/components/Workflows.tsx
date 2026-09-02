@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState } from 'react'
+import { useEffect, useState } from 'react'
 import { describeActionShort } from '@shared/actions'
 import type { AutomationAction } from '@shared/actions'
 import type { Workflow } from '@shared/workflows'
@@ -12,6 +12,7 @@ import {
 import type { Result } from '../result'
 import ActionIcon from './ActionIcon'
 import ResultStatus from './ResultStatus'
+import HotkeyField from './HotkeyField'
 
 interface StepRow {
   kind: ActionKind
@@ -21,139 +22,6 @@ interface StepRow {
 function displayName(path: string): string {
   const base = path.split(/[\\/]/).pop() ?? path
   return base.replace(/\.exe$/i, '')
-}
-
-const NAMED_KEYS: Record<string, string> = {
-  Space: 'Space',
-  Enter: 'Enter',
-  Escape: 'Esc',
-  Tab: 'Tab',
-  Backspace: 'Backspace',
-  Delete: 'Delete',
-  Insert: 'Insert',
-  Home: 'Home',
-  End: 'End',
-  PageUp: 'PageUp',
-  PageDown: 'PageDown',
-  ArrowUp: 'Up',
-  ArrowDown: 'Down',
-  ArrowLeft: 'Left',
-  ArrowRight: 'Right',
-}
-
-// Builds an Electron accelerator from the physical key (event.code), so the
-// combination works regardless of the keyboard layout (e.g. Cyrillic).
-function codeToAccelerator(event: React.KeyboardEvent): string | null {
-  const modifiers: string[] = []
-  if (event.ctrlKey) modifiers.push('Ctrl')
-  if (event.altKey) modifiers.push('Alt')
-  if (event.shiftKey) modifiers.push('Shift')
-  if (modifiers.length === 0) {
-    return null
-  }
-
-  const code = event.code
-  if (/^(Control|Alt|Shift|Meta)(Left|Right)$/.test(code)) {
-    return null
-  }
-
-  const letter = /^Key([A-Z])$/.exec(code)?.[1]
-  if (letter !== undefined) {
-    return [...modifiers, letter].join('+')
-  }
-  const digit = /^Digit([0-9])$/.exec(code)?.[1]
-  if (digit !== undefined) {
-    return [...modifiers, digit].join('+')
-  }
-  const numpad = /^Numpad([0-9])$/.exec(code)?.[1]
-  if (numpad !== undefined) {
-    return [...modifiers, `num${numpad}`].join('+')
-  }
-  if (/^F([1-9]|1\d|2[0-4])$/.test(code)) {
-    return [...modifiers, code].join('+')
-  }
-
-  const mapped = NAMED_KEYS[code]
-  return mapped === undefined ? null : [...modifiers, mapped].join('+')
-}
-
-function HotkeyField({
-  value,
-  onChange,
-  disabled,
-}: {
-  value: string | null
-  onChange: (value: string | null) => void
-  disabled: boolean
-}) {
-  const [recording, setRecording] = useState(false)
-  const ref = useRef<HTMLButtonElement>(null)
-
-  useEffect(() => {
-    if (!recording) {
-      return
-    }
-    const el = ref.current
-    if (el === null) {
-      return
-    }
-    const stop = (): void => setRecording(false)
-    el.addEventListener('blur', stop)
-    return () => el.removeEventListener('blur', stop)
-  }, [recording])
-
-  const record = (event: React.KeyboardEvent<HTMLButtonElement>): void => {
-    if (!recording) {
-      return
-    }
-    event.preventDefault()
-    event.stopPropagation()
-    if (event.key === 'Escape') {
-      setRecording(false)
-      return
-    }
-    const accelerator = codeToAccelerator(event)
-    if (accelerator === null) {
-      return
-    }
-    onChange(accelerator)
-    setRecording(false)
-  }
-
-  return (
-    <button
-      ref={ref}
-      type="button"
-      className={`hotkey-field${recording ? ' recording' : ''}`}
-      disabled={disabled}
-      onClick={() => setRecording(true)}
-      onKeyDown={record}
-      title={
-        recording
-          ? 'Press the combination (Ctrl or Alt required)'
-          : 'Click, then press the combination'
-      }
-    >
-      {recording ? (
-        <span className="hotkey-recording">Press Ctrl or Alt + a key…</span>
-      ) : (
-        <span className="hotkey-keys">{value ?? 'None'}</span>
-      )}
-      {!recording && value !== null && (
-        <span
-          className="hotkey-clear"
-          role="button"
-          tabIndex={-1}
-          onClick={(event) => {
-            event.stopPropagation()
-            onChange(null)
-          }}
-        >
-          ×
-        </span>
-      )}
-    </button>
-  )
 }
 
 function WorkflowIcon({ path }: { path: string | null }) {

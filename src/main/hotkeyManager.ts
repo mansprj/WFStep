@@ -1,6 +1,7 @@
 import { globalShortcut } from 'electron'
 import { listWorkflows } from './workflowsManager'
 import { startWorkflowRun } from './workflowRunner'
+import { clearCommandHotkeys, refreshCommandHotkeys } from './commandHotkeyManager'
 
 const registered = new Map<string, string>()
 const failures = new Map<string, string>()
@@ -37,6 +38,8 @@ export function refreshHotkeys(): void {
       )
     }
   }
+
+  refreshCommandHotkeys()
 }
 
 export function hotkeyIssue(workflowId: string): string | null {
@@ -54,6 +57,7 @@ export function registeredHotkeys(): Array<{
 }
 
 export function clearHotkeys(): void {
+  clearCommandHotkeys()
   globalShortcut.unregisterAll()
   registered.clear()
   failures.clear()

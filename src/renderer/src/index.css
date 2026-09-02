@@ -1,17 +1,88 @@
-:root {
-  --text: #e5e7eb;
-  --text-dim: #9ca3af;
-  --bg: #16171d;
-  --card-bg: #1f2028;
-  --border: #2e303a;
-  --accent: #c084fc;
-  --success: #4ade80;
-  --error: #f87171;
+/* ---- Themes ----
+   The resolved theme is stored in settings and applied as the `data-theme`
+   attribute on <html>. The default (no attribute / graphite-amber) is the
+   graphite + amber palette. */
+:root,
+:root[data-theme='graphite-amber'] {
+  --text: #ece9e2;
+  --text-dim: #a49f94;
+  --bg: #191b1f;
+  --card-bg: #21242b;
+  --border: #33383f;
+  --accent: #e8a33d;
+  --accent-strong: #f7bd63;
+  --on-accent: #1c1404;
+  --success: #6fbf73;
+  --error: #e86a5b;
+  color-scheme: dark;
+}
 
+/* Theme: light (paper) — friendlier for daytime/office use. */
+:root[data-theme='light'] {
+  --text: #23262b;
+  --text-dim: #5c636e;
+  --bg: #f4f5f7;
+  --card-bg: #ffffff;
+  --border: #d9dde3;
+  --accent: #d28a1f;
+  --accent-strong: #b06f12;
+  --on-accent: #ffffff;
+  --success: #2e7d32;
+  --error: #c62828;
+  color-scheme: light;
+}
+
+/* Theme: midnight blue (cool, classic). */
+:root[data-theme='blue'] {
+  --text: #e3e8f0;
+  --text-dim: #98a3b4;
+  --bg: #0e1420;
+  --card-bg: #172033;
+  --border: #2a3a52;
+  --accent: #4dd0c7;
+  --accent-strong: #7fe0d8;
+  --on-accent: #06232a;
+  --success: #5cb85c;
+  --error: #e07b6a;
+  color-scheme: dark;
+}
+
+/* Theme: follow the OS. Dark by default; flips to light when Windows requests
+   a light color scheme. */
+:root[data-theme='system'] {
+  --text: #ece9e2;
+  --text-dim: #a49f94;
+  --bg: #191b1f;
+  --card-bg: #21242b;
+  --border: #33383f;
+  --accent: #e8a33d;
+  --accent-strong: #f7bd63;
+  --on-accent: #1c1404;
+  --success: #6fbf73;
+  --error: #e86a5b;
+  color-scheme: dark;
+}
+
+@media (prefers-color-scheme: light) {
+  :root[data-theme='system'] {
+    --text: #23262b;
+    --text-dim: #5c636e;
+    --bg: #f4f5f7;
+    --card-bg: #ffffff;
+    --border: #d9dde3;
+    --accent: #d28a1f;
+    --accent-strong: #b06f12;
+    --on-accent: #ffffff;
+    --success: #2e7d32;
+    --error: #c62828;
+    color-scheme: light;
+  }
+}
+
+:root {
   --sans: system-ui, 'Segoe UI', Roboto, sans-serif;
 
   font: 16px/150% var(--sans);
-  color-scheme: dark;
   color: var(--text);
   background: var(--bg);
   font-synthesis: none;
