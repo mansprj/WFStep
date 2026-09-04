@@ -6,6 +6,9 @@ export type AutomationAction =
   | { type: 'shell'; command: string }
   | { type: 'openUrl'; url: string }
   | { type: 'openFolder'; path: string }
+  | { type: 'activateWindow'; window: string }
+  | { type: 'waitForWindow'; window: string; timeoutMs: number }
+  | { type: 'clickText'; text: string; window: string; timeoutMs: number }
 
 function isNonEmptyString(value: unknown): value is string {
   return typeof value === 'string' && value.trim().length > 0
@@ -37,6 +40,23 @@ export function isAutomationAction(value: unknown): value is AutomationAction {
       return isNonEmptyString(record.url)
     case 'openFolder':
       return isNonEmptyString(record.path)
+    case 'activateWindow':
+      return isNonEmptyString(record.window)
+    case 'waitForWindow':
+      return (
+        isNonEmptyString(record.window) &&
+        typeof record.timeoutMs === 'number' &&
+        Number.isFinite(record.timeoutMs) &&
+        record.timeoutMs >= 0
+      )
+    case 'clickText':
+      return (
+        isNonEmptyString(record.text) &&
+        typeof record.window === 'string' &&
+        typeof record.timeoutMs === 'number' &&
+        Number.isFinite(record.timeoutMs) &&
+        record.timeoutMs >= 0
+      )
     default:
       return false
   }
@@ -59,6 +79,12 @@ export function describeAction(action: AutomationAction): string {
       return `Open URL: ${action.url}`
     case 'openFolder':
       return `Open folder: ${action.path}`
+    case 'activateWindow':
+      return `Activate window: ${action.window}`
+    case 'waitForWindow':
+      return `Wait for window: ${action.window}`
+    case 'clickText':
+      return `Click "${action.text}"`
   }
 }
 
@@ -83,5 +109,11 @@ export function describeActionShort(action: AutomationAction): string {
       return `Open ${action.url}`
     case 'openFolder':
       return `Open ${baseName(action.path)}`
+    case 'activateWindow':
+      return `Focus ${action.window}`
+    case 'waitForWindow':
+      return `Wait ${action.window}`
+    case 'clickText':
+      return `Click ${action.text}`
   }
 }

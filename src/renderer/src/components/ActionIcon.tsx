@@ -72,6 +72,66 @@ const ICONS: Record<ActionKind, ReactElement> = {
       />
     </svg>
   ),
+  activateWindow: (
+    <svg viewBox="0 0 16 16" fill="none">
+      <rect
+        x="1.5"
+        y="2.5"
+        width="13"
+        height="11"
+        rx="1.5"
+        stroke="currentColor"
+        strokeWidth="1.4"
+      />
+      <path
+        d="M1.5 5.5h13"
+        stroke="currentColor"
+        strokeWidth="1.4"
+      />
+      <path
+        d="M6 8h4M6 10.5h3"
+        stroke="currentColor"
+        strokeWidth="1.4"
+        strokeLinecap="round"
+      />
+    </svg>
+  ),
+  waitForWindow: (
+    <svg viewBox="0 0 16 16" fill="none">
+      <rect
+        x="1.5"
+        y="2.5"
+        width="13"
+        height="11"
+        rx="1.5"
+        stroke="currentColor"
+        strokeWidth="1.4"
+      />
+      <path
+        d="M8 6.5v2.5l1.8 1.2"
+        stroke="currentColor"
+        strokeWidth="1.5"
+        strokeLinecap="round"
+      />
+    </svg>
+  ),
+  clickText: (
+    <svg viewBox="0 0 16 16" fill="none">
+      <path
+        d="M4 3l3.5 8.5L9 8l3-1.5z"
+        fill="currentColor"
+        stroke="currentColor"
+        strokeWidth="1"
+        strokeLinejoin="round"
+      />
+      <path
+        d="M12.5 3.5V1M12.5 8.5v-2.5M9.25 3.5h6.5"
+        stroke="currentColor"
+        strokeWidth="1.2"
+        strokeLinecap="round"
+      />
+    </svg>
+  ),
 }
 
 interface ActionIconProps {

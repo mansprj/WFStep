@@ -10,6 +10,9 @@ export const KIND_LABELS: Record<ActionKind, string> = {
   shell: 'Run shell command',
   openUrl: 'Open URL',
   openFolder: 'Open folder',
+  activateWindow: 'Activate window',
+  waitForWindow: 'Wait for window',
+  clickText: 'Click element by text',
 }
 
 export const KIND_PLACEHOLDERS: Record<ActionKind, string> = {
@@ -20,6 +23,9 @@ export const KIND_PLACEHOLDERS: Record<ActionKind, string> = {
   shell: 'Command (e.g. echo hello)',
   openUrl: 'https://example.com',
   openFolder: 'C:\\Path\\To\\Folder',
+  activateWindow: 'Window title or program name (e.g. Chrome)',
+  waitForWindow: 'Window title or program name (e.g. Chrome)',
+  clickText: 'Element text to click (e.g. OK, Save)',
 }
 
 export const KIND_HELP: Record<ActionKind, string> = {
@@ -30,6 +36,9 @@ export const KIND_HELP: Record<ActionKind, string> = {
   shell: 'Run a shell command.',
   openUrl: 'Open a web address (http/https only).',
   openFolder: 'Open a folder in Explorer.',
+  activateWindow: 'Bring a window to the foreground by its title or program name.',
+  waitForWindow: 'Wait until a window appears (default 10 s).',
+  clickText: 'Click an on-screen element by its text (e.g. a button).',
 }
 
 export function actionFromInput(kind: ActionKind, value: string): AutomationAction {
@@ -48,6 +57,12 @@ export function actionFromInput(kind: ActionKind, value: string): AutomationActi
       return { type: 'openUrl', url: value }
     case 'openFolder':
       return { type: 'openFolder', path: value }
+    case 'activateWindow':
+      return { type: 'activateWindow', window: value }
+    case 'waitForWindow':
+      return { type: 'waitForWindow', window: value, timeoutMs: 10000 }
+    case 'clickText':
+      return { type: 'clickText', text: value, window: '', timeoutMs: 5000 }
   }
 }
 
@@ -69,5 +84,11 @@ export function inputFromAction(
       return { kind: 'openUrl', value: action.url }
     case 'openFolder':
       return { kind: 'openFolder', value: action.path }
+    case 'activateWindow':
+      return { kind: 'activateWindow', value: action.window }
+    case 'waitForWindow':
+      return { kind: 'waitForWindow', value: action.window }
+    case 'clickText':
+      return { kind: 'clickText', value: action.text }
   }
 }

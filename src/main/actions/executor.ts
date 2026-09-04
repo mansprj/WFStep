@@ -10,6 +10,7 @@ import {
   restartProcess,
 } from '../processManager'
 import { logEvent } from '../logManager'
+import { activateWindow, clickText, waitForWindow } from '../windowActions'
 import type { AutomationAction } from '@shared/actions'
 import type { LogSource } from '@shared/logs'
 import type { ActionResult } from '@shared/types'
@@ -131,6 +132,15 @@ export async function executeAction(
       break
     case 'openFolder':
       result = await openFolder(action.path)
+      break
+    case 'activateWindow':
+      result = await activateWindow(action.window)
+      break
+    case 'waitForWindow':
+      result = await waitForWindow(action.window, action.timeoutMs)
+      break
+    case 'clickText':
+      result = await clickText(action.text, action.window, action.timeoutMs)
       break
   }
   if (runContext !== undefined) {
