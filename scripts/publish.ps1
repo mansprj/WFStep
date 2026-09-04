@@ -108,7 +108,7 @@ foreach ($a in $assetMap) {
 # --- Verify ---
 $final = Invoke-RestMethod -Uri "https://api.github.com/repos/mansprj/WFStep/releases/$releaseId" -Headers @{ Authorization = "token $token" }
 $finalNames = ($final.assets | ForEach-Object { $_.name }) -join ', '
-Write-Host "`nRelease $tag: $finalNames" -ForegroundColor Green
+Write-Host "`nRelease ${tag}: $finalNames" -ForegroundColor Green
 Write-Host "Done. $uploaded asset(s) uploaded." -ForegroundColor Green
 
 Remove-Item Env:GH_TOKEN -ErrorAction SilentlyContinue
