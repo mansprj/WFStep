@@ -1,13 +1,9 @@
 import { execFile } from 'node:child_process'
 import { setTimeout as delay } from 'node:timers/promises'
 import { promisify } from 'node:util'
+import type { WindowInfo } from '@shared/windows'
 
 const execFileAsync = promisify(execFile)
-
-export interface WindowMatch {
-  title: string
-  process: string
-}
 
 // Runs a PowerShell script and returns its stdout trimmed. Using
 // -EncodedCommand (base64, UTF-16LE) avoids all quoting/escaping issues.
@@ -22,7 +18,7 @@ async function runPowershell(script: string, timeoutMs = 15000): Promise<string>
 }
 
 // Lists visible windows as { title, process } pairs using Get-Process.
-export async function listWindows(): Promise<WindowMatch[]> {
+export async function listWindows(): Promise<WindowInfo[]> {
   const ps = `
     Get-Process | Where-Object { $_.MainWindowTitle } |
       Select-Object @{n='title';e={$_.MainWindowTitle}}, @{n='process';e={$_.ProcessName}} |

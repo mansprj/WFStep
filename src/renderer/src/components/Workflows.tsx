@@ -243,6 +243,34 @@ function WorkflowEditor({
     }
   }
 
+  const pickWindow = async (index: number): Promise<void> => {
+    const wins = await window.api.windows.list()
+    if (wins.length === 0) {
+      window.alert('No open windows found.')
+      return
+    }
+    const list = wins
+      .map((w, i) => `${i + 1}. ${w.title}  [${w.process}]`)
+      .join('\n')
+    const input = window.prompt(
+      `Open windows (enter a number or type a name):\n\n${list}`,
+    )
+    if (input === null) {
+      return
+    }
+    const text = input.trim()
+    const num = Number(text)
+    let value = ''
+    if (Number.isInteger(num) && num >= 1 && num <= wins.length) {
+      value = wins[num - 1].title || wins[num - 1].process
+    } else if (text.length > 0) {
+      value = text
+    }
+    if (value.length > 0) {
+      updateStep(index, { value })
+    }
+  }
+
   const chooseIcon = async (): Promise<void> => {
     const path = await window.api.dialogs.selectImage()
     if (path !== null) {
@@ -390,6 +418,19 @@ function WorkflowEditor({
                   }
                 >
                   Browse…
+                </button>
+              )}
+              {(step.kind === 'activateWindow' ||
+                step.kind === 'waitForWindow' ||
+                step.kind === 'clickText') && (
+                <button
+                  type="button"
+                  className="workflow-browse"
+                  onClick={() => pickWindow(index)}
+                  disabled={busy}
+                  title="Pick from open windows"
+                >
+                  Window…
                 </button>
               )}
             </div>

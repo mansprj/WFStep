@@ -2,6 +2,7 @@ import { app, ipcMain, net } from 'electron'
 import { existsSync, readFileSync } from 'node:fs'
 import { extname } from 'node:path'
 import { selectExecutable, selectFolder, selectImage } from './dialogs'
+import { listWindows } from './windowActions'
 import {
   findProcessPath,
   getProcessStatus,
@@ -196,6 +197,7 @@ export function registerIpcHandlers(): void {
   ipcMain.handle('dialog:selectExecutable', () => selectExecutable())
   ipcMain.handle('dialog:selectImage', () => selectImage())
   ipcMain.handle('dialog:selectFolder', () => selectFolder())
+  ipcMain.handle('windows:list', () => listWindows())
   ipcMain.handle('icon:get', async (_event, value: unknown) => {
     if (typeof value !== 'string' || value.trim().length === 0) {
       return null

@@ -32,6 +32,9 @@ const api = {
   pages: {
     title: (url: string) => ipcRenderer.invoke('page:title', url),
   },
+  windows: {
+    list: () => ipcRenderer.invoke('windows:list'),
+  },
   actions: {
     run: (action: AutomationAction) => ipcRenderer.invoke('action:run', action),
   },

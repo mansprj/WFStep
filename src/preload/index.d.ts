@@ -15,6 +15,7 @@ import type {
   MacroStep,
   PlaybackConfig,
 } from '@shared/macros'
+import type { WindowInfo } from '@shared/windows'
 
 declare global {
   interface Window {
@@ -40,6 +41,9 @@ declare global {
       }
       pages: {
         title: (url: string) => Promise<string | null>
+      }
+      windows: {
+        list: () => Promise<WindowInfo[]>
       }
       actions: {
         run: (action: AutomationAction) => Promise<ActionResult>
