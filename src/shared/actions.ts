@@ -9,6 +9,10 @@ export type AutomationAction =
   | { type: 'activateWindow'; window: string }
   | { type: 'waitForWindow'; window: string; timeoutMs: number }
   | { type: 'clickText'; text: string; window: string; timeoutMs: number }
+  | { type: 'ifWindowExists'; window: string; skipOnFail: number }
+  | { type: 'ifWindowMissing'; window: string; skipOnFail: number }
+  | { type: 'ifProcessRunning'; processName: string; skipOnFail: number }
+  | { type: 'ifProcessStopped'; processName: string; skipOnFail: number }
 
 function isNonEmptyString(value: unknown): value is string {
   return typeof value === 'string' && value.trim().length > 0
@@ -57,9 +61,21 @@ export function isAutomationAction(value: unknown): value is AutomationAction {
         Number.isFinite(record.timeoutMs) &&
         record.timeoutMs >= 0
       )
+    case 'ifWindowExists':
+    case 'ifWindowMissing':
+      return isNonEmptyString(record.window) && isSkipCount(record.skipOnFail)
+    case 'ifProcessRunning':
+    case 'ifProcessStopped':
+      return (
+        isNonEmptyString(record.processName) && isSkipCount(record.skipOnFail)
+      )
     default:
       return false
   }
+}
+
+function isSkipCount(value: unknown): value is number {
+  return typeof value === 'number' && Number.isInteger(value) && value >= 0
 }
 
 // Short human-readable description used in workflow progress and step lists.
@@ -85,6 +101,14 @@ export function describeAction(action: AutomationAction): string {
       return `Wait for window: ${action.window}`
     case 'clickText':
       return `Click "${action.text}"`
+    case 'ifWindowExists':
+      return `If window "${action.window}" exists (else skip ${action.skipOnFail})`
+    case 'ifWindowMissing':
+      return `If window "${action.window}" is missing (else skip ${action.skipOnFail})`
+    case 'ifProcessRunning':
+      return `If process "${action.processName}" is running (else skip ${action.skipOnFail})`
+    case 'ifProcessStopped':
+      return `If process "${action.processName}" is stopped (else skip ${action.skipOnFail})`
   }
 }
 
@@ -115,5 +139,13 @@ export function describeActionShort(action: AutomationAction): string {
       return `Wait ${action.window}`
     case 'clickText':
       return `Click ${action.text}`
+    case 'ifWindowExists':
+      return `If ${action.window} exists`
+    case 'ifWindowMissing':
+      return `If ${action.window} missing`
+    case 'ifProcessRunning':
+      return `If ${action.processName} running`
+    case 'ifProcessStopped':
+      return `If ${action.processName} stopped`
   }
 }

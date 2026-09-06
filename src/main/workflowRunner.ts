@@ -2,10 +2,25 @@ import { BrowserWindow } from 'electron'
 import { executeAction } from './actions/executor'
 import { logEvent } from './logManager'
 import { describeAction } from '@shared/actions'
+import type { AutomationAction } from '@shared/actions'
 import type { Workflow, WorkflowProgress } from '@shared/workflows'
 
 let runningId: string | null = null
 let cancelRequested = false
+
+// Returns how many following steps a failed action should skip (only the
+// conditional actions carry this). 0 means "stop the workflow on failure".
+function actionSkipCount(action: AutomationAction): number {
+  switch (action.type) {
+    case 'ifWindowExists':
+    case 'ifWindowMissing':
+    case 'ifProcessRunning':
+    case 'ifProcessStopped':
+      return action.skipOnFail
+    default:
+      return 0
+  }
+}
 
 export function isWorkflowRunning(): boolean {
   return runningId !== null
@@ -81,6 +96,19 @@ export async function startWorkflowRun(
       )
 
       if (!result.success) {
+        const skip = actionSkipCount(action)
+        if (skip > 0) {
+          const skippedMessage = `${result.message} Skipping next ${skip} step${skip === 1 ? '' : 's'}.`
+          logEvent({
+            source: 'workflow',
+            context: workflow.name,
+            actionType: 'workflow',
+            success: false,
+            message: `Step ${stepIndex + 1}/${totalSteps}: ${skippedMessage}`,
+          })
+          stepIndex += skip
+          continue
+        }
         logEvent({
           source: 'workflow',
           context: workflow.name,

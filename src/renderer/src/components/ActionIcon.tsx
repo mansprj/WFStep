@@ -132,6 +132,65 @@ const ICONS: Record<ActionKind, ReactElement> = {
       />
     </svg>
   ),
+  ifWindowExists: (
+    <svg viewBox="0 0 16 16" fill="none">
+      <rect
+        x="1.5"
+        y="2.5"
+        width="11"
+        height="9"
+        rx="1"
+        stroke="currentColor"
+        strokeWidth="1.4"
+      />
+      <path d="M3 5.5h8" stroke="currentColor" strokeWidth="1.4" />
+      <path
+        d="M5.2 8.5l1.6 1.6 3-3"
+        stroke="currentColor"
+        strokeWidth="1.5"
+        strokeLinecap="round"
+        strokeLinejoin="round"
+      />
+    </svg>
+  ),
+  ifWindowMissing: (
+    <svg viewBox="0 0 16 16" fill="none">
+      <rect
+        x="1.5"
+        y="2.5"
+        width="11"
+        height="9"
+        rx="1"
+        stroke="currentColor"
+        strokeWidth="1.4"
+      />
+      <path d="M3 5.5h8" stroke="currentColor" strokeWidth="1.4" />
+      <path
+        d="M5.5 8.5l3-3M8.5 8.5l-3-3"
+        stroke="currentColor"
+        strokeWidth="1.5"
+        strokeLinecap="round"
+      />
+    </svg>
+  ),
+  ifProcessRunning: (
+    <svg viewBox="0 0 16 16" fill="none">
+      <circle cx="8" cy="8" r="6" stroke="currentColor" strokeWidth="1.4" />
+      <path
+        d="M6.5 5.5v5L11 8z"
+        fill="currentColor"
+        stroke="currentColor"
+        strokeWidth="1"
+        strokeLinejoin="round"
+      />
+    </svg>
+  ),
+  ifProcessStopped: (
+    <svg viewBox="0 0 16 16" fill="none">
+      <circle cx="8" cy="8" r="6" stroke="currentColor" strokeWidth="1.4" />
+      <rect x="5.5" y="5.5" width="5" height="5" rx="1" fill="currentColor" />
+    </svg>
+  ),
 }
 
 interface ActionIconProps {

@@ -10,7 +10,7 @@ import {
   restartProcess,
 } from '../processManager'
 import { logEvent } from '../logManager'
-import { activateWindow, clickText, waitForWindow } from '../windowActions'
+import { activateWindow, clickText, processRunning, waitForWindow, windowExists } from '../windowActions'
 import type { AutomationAction } from '@shared/actions'
 import type { LogSource } from '@shared/logs'
 import type { ActionResult } from '@shared/types'
@@ -141,6 +141,26 @@ export async function executeAction(
       break
     case 'clickText':
       result = await clickText(action.text, action.window, action.timeoutMs)
+      break
+    case 'ifWindowExists':
+      result = (await windowExists(action.window))
+        ? { success: true, message: `Window "${action.window}" is open.` }
+        : { success: false, message: `Window "${action.window}" is not open.` }
+      break
+    case 'ifWindowMissing':
+      result = (await windowExists(action.window))
+        ? { success: false, message: `Window "${action.window}" is open.` }
+        : { success: true, message: `Window "${action.window}" is not open.` }
+      break
+    case 'ifProcessRunning':
+      result = (await processRunning(action.processName))
+        ? { success: true, message: `Process "${action.processName}" is running.` }
+        : { success: false, message: `Process "${action.processName}" is not running.` }
+      break
+    case 'ifProcessStopped':
+      result = (await processRunning(action.processName))
+        ? { success: false, message: `Process "${action.processName}" is running.` }
+        : { success: true, message: `Process "${action.processName}" is not running.` }
       break
   }
   if (runContext !== undefined) {

@@ -92,6 +92,52 @@ export async function activateWindow(window: string): Promise<{ success: boolean
   }
 }
 
+// True if a window whose title or process name matches is currently open.
+export async function windowExists(window: string): Promise<boolean> {
+  const token = window.trim()
+  if (token.length === 0) {
+    return false
+  }
+  const escaped = token.replace(/\\/g, '\\\\').replace(/'/g, "''")
+  const ps = `
+    $token = '${escaped}'
+    $found = Get-Process | Where-Object {
+      $_.MainWindowHandle -ne 0 -and (
+        ($_.MainWindowTitle -and $_.MainWindowTitle.IndexOf($token, [System.StringComparison]::OrdinalIgnoreCase) -ge 0) -or
+        ($_.ProcessName.IndexOf($token, [System.StringComparison]::OrdinalIgnoreCase) -ge 0)
+      )
+    } | Select-Object -First 1
+    if ($found) { Write-Output 'YES' } else { Write-Output 'NO' }
+  `
+  try {
+    return (await runPowershell(ps, 5000)) === 'YES'
+  } catch {
+    return false
+  }
+}
+
+// True if a process with the given name (or executable file base name) is
+// currently running.
+export async function processRunning(name: string): Promise<boolean> {
+  const token = name.trim()
+  if (token.length === 0) {
+    return false
+  }
+  const base = (token.split(/[\\/]/).pop() ?? token).replace(/\.exe$/i, '')
+  const escaped = base.replace(/'/g, "''")
+  const ps = `
+    $token = '${escaped}'
+    $found = Get-Process | Where-Object { $_.ProcessName -eq $token } |
+      Select-Object -First 1
+    if ($found) { Write-Output 'YES' } else { Write-Output 'NO' }
+  `
+  try {
+    return (await runPowershell(ps, 5000)) === 'YES'
+  } catch {
+    return false
+  }
+}
+
 // Waits until a window whose title or process name matches appears, or the
 // timeout elapses. Polls every 200 ms.
 export async function waitForWindow(

@@ -4,9 +4,11 @@ import type { AutomationAction } from '@shared/actions'
 import type { Workflow } from '@shared/workflows'
 import {
   actionFromInput,
+  emptyExtras,
   inputFromAction,
   KIND_LABELS,
   KIND_PLACEHOLDERS,
+  type ActionExtras,
   type ActionKind,
 } from '../actionForm'
 import type { Result } from '../result'
@@ -17,6 +19,7 @@ import HotkeyField from './HotkeyField'
 interface StepRow {
   kind: ActionKind
   value: string
+  extras: ActionExtras
 }
 
 function displayName(path: string): string {
@@ -213,7 +216,10 @@ function WorkflowEditor({
   }
 
   const addStep = (): void => {
-    setSteps((current) => [...current, { kind: 'start', value: '' }])
+    setSteps((current) => [
+      ...current,
+      { kind: 'start', value: '', extras: emptyExtras() },
+    ])
   }
 
   const removeStep = (index: number): void => {
@@ -244,6 +250,7 @@ function WorkflowEditor({
   }
 
   const pickWindow = async (index: number): Promise<void> => {
+    const step = steps[index]
     const wins = await window.api.windows.list()
     if (wins.length === 0) {
       window.alert('No open windows found.')
@@ -266,7 +273,12 @@ function WorkflowEditor({
     } else if (text.length > 0) {
       value = text
     }
-    if (value.length > 0) {
+    if (value.length === 0) {
+      return
+    }
+    if (step.kind === 'clickText') {
+      updateStep(index, { extras: { ...step.extras, window: value } })
+    } else {
       updateStep(index, { value })
     }
   }
@@ -422,7 +434,9 @@ function WorkflowEditor({
               )}
               {(step.kind === 'activateWindow' ||
                 step.kind === 'waitForWindow' ||
-                step.kind === 'clickText') && (
+                step.kind === 'clickText' ||
+                step.kind === 'ifWindowExists' ||
+                step.kind === 'ifWindowMissing') && (
                 <button
                   type="button"
                   className="workflow-browse"
@@ -434,6 +448,82 @@ function WorkflowEditor({
                 </button>
               )}
             </div>
+            {(step.kind === 'ifWindowExists' ||
+              step.kind === 'ifWindowMissing' ||
+              step.kind === 'ifProcessRunning' ||
+              step.kind === 'ifProcessStopped' ||
+              step.kind === 'waitForWindow' ||
+              step.kind === 'clickText') && (
+              <div className="input-row step-extra">
+                {(step.kind === 'ifWindowExists' ||
+                  step.kind === 'ifWindowMissing' ||
+                  step.kind === 'ifProcessRunning' ||
+                  step.kind === 'ifProcessStopped') && (
+                  <label className="step-extra-field">
+                    Skip next
+                    <input
+                      type="number"
+                      min={0}
+                      max={50}
+                      value={step.extras.skipOnFail}
+                      onChange={(event) =>
+                        updateStep(index, {
+                          extras: {
+                            ...step.extras,
+                            skipOnFail: Math.max(
+                              0,
+                              Math.min(50, Number(event.target.value) || 0),
+                            ),
+                          },
+                        })
+                      }
+                      disabled={busy}
+                    />
+                    steps if the condition fails (0 = stop the workflow)
+                  </label>
+                )}
+                {step.kind === 'clickText' && (
+                  <label className="step-extra-field">
+                    Window
+                    <input
+                      type="text"
+                      placeholder="Window title or program"
+                      value={step.extras.window}
+                      onChange={(event) =>
+                        updateStep(index, {
+                          extras: { ...step.extras, window: event.target.value },
+                        })
+                      }
+                      disabled={busy}
+                    />
+                  </label>
+                )}
+                {(step.kind === 'waitForWindow' ||
+                  step.kind === 'clickText') && (
+                  <label className="step-extra-field">
+                    Timeout
+                    <input
+                      type="number"
+                      min={0}
+                      value={step.extras.timeoutMs}
+                      onChange={(event) =>
+                        updateStep(index, {
+                          extras: {
+                            ...step.extras,
+                            timeoutMs: Math.max(
+                              0,
+                              Number(event.target.value) || 0,
+                            ),
+                          },
+                        })
+                      }
+                      disabled={busy}
+                    />
+                    ms
+                  </label>
+                )}
+              </div>
+            )}
             {(step.kind === 'stop' || step.kind === 'restart') &&
               startPaths.length > 0 && (
                 <div className="workflow-suggestions">
@@ -529,7 +619,7 @@ function Workflows() {
   ): Promise<boolean> => {
     const actions = steps
       .filter((step) => step.value.trim().length > 0)
-      .map((step) => actionFromInput(step.kind, step.value))
+      .map((step) => actionFromInput(step.kind, step.value, step.extras))
 
     setBusy(true)
     const outcome =
@@ -656,7 +746,10 @@ function Workflows() {
           initialIcon={editing?.iconPath ?? null}
           initialHotkey={editing?.hotkey ?? null}
           initialSteps={
-            editing?.actions.map((action) => inputFromAction(action)) ?? []
+            editing?.actions.map((action) => {
+              const input = inputFromAction(action)
+              return { kind: input.kind, value: input.value, extras: input.extras }
+            }) ?? []
           }
           submitLabel={editing === null ? 'Create workflow' : 'Save'}
           busy={busy || running}
