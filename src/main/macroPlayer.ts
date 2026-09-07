@@ -1,5 +1,5 @@
 import koffi from 'koffi'
-import type { MacroButton, MacroStep } from '@shared/macros'
+import type { MacroButton, MacroStep, MousePathPoint } from '@shared/macros'
 
 // Windows user32 INPUT type constants.
 const INPUT_MOUSE = 0
@@ -215,6 +215,30 @@ export class MacroPlayer {
     }
   }
 
+  // Smoothly sweep along a recorded path. Each segment takes
+  // (point.delayMs / speed) ms, plus the path's leading delay on the first
+  // segment, so pacing matches the original recording.
+  private async sweepPath(
+    points: MousePathPoint[],
+    leadingDelayMs: number,
+    denominator: number,
+  ): Promise<void> {
+    if (points.length === 1 || !this.playing) {
+      this.moveTo(points[points.length - 1].x, points[points.length - 1].y)
+      return
+    }
+    let previous = points[0]
+    for (let i = 0; i < points.length - 1; i++) {
+      if (!this.playing || this.stopRequested) {
+        return
+      }
+      const point = points[i + 1]
+      const segDelay = points[i].delayMs + (i === 0 ? leadingDelayMs : 0)
+      await this.sweepMove(previous.x, previous.y, point.x, point.y, segDelay / denominator)
+      previous = point
+    }
+  }
+
   private async executeStep(step: MacroStep): Promise<void> {
     const api = ensureApi()
     switch (step.type) {
@@ -276,7 +300,12 @@ export class MacroPlayer {
           // sweep consumes the combined delays of the whole run as its duration,
           // so it replaces both the leading sleep and the individual steps —
           // the cursor glides instead of teleporting (fixes "jerky" playback).
-          if (step.type === 'mouseMove') {
+          // Compact mousePath steps (recorded runs of moves) are swept the same
+          // way, segment by segment.
+          if (step.type === 'mousePath') {
+            await this.sweepPath(step.points, step.delayMs, denominator)
+            i++
+          } else if (step.type === 'mouseMove') {
             const x0 = step.x
             const y0 = step.y
             let j = i

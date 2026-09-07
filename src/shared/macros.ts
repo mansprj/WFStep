@@ -1,7 +1,16 @@
 export type MacroButton = 'left' | 'right' | 'middle'
 
+// One sampled point of a recorded mouse path. `delayMs` is the time that
+// elapsed after this point before the next one (or the next event).
+export interface MousePathPoint {
+  x: number
+  y: number
+  delayMs: number
+}
+
 export type MacroStep =
   | { type: 'mouseMove'; delayMs: number; x: number; y: number }
+  | { type: 'mousePath'; delayMs: number; points: MousePathPoint[] }
   | { type: 'mouseDown'; delayMs: number; x: number; y: number; button: MacroButton }
   | { type: 'mouseUp'; delayMs: number; x: number; y: number; button: MacroButton }
   | { type: 'mouseClick'; delayMs: number; x: number; y: number; button: MacroButton; count: number }
@@ -51,6 +60,19 @@ export function isValidMacroStep(value: unknown): value is MacroStep {
   switch (record.type as string) {
     case 'mouseMove':
       return isFiniteNumber(record.x) && isFiniteNumber(record.y)
+    case 'mousePath':
+      return (
+        Array.isArray(record.points) &&
+        record.points.length >= 1 &&
+        record.points.every(
+          (point) =>
+            typeof point === 'object' &&
+            point !== null &&
+            isFiniteNumber((point as Record<string, unknown>).x) &&
+            isFiniteNumber((point as Record<string, unknown>).y) &&
+            isDelay((point as Record<string, unknown>).delayMs),
+        )
+      )
     case 'mouseDown':
     case 'mouseUp':
       return (
@@ -239,6 +261,8 @@ export function describeMacroStep(step: MacroStep): string {
   switch (step.type) {
     case 'mouseMove':
       return `Move to ${step.x},${step.y}`
+    case 'mousePath':
+      return `Move (${step.points.length} points)`
     case 'mouseDown':
       return `${buttonName(step.button)} down at ${step.x},${step.y}`
     case 'mouseUp':
@@ -260,6 +284,13 @@ export function describeMacroStep(step: MacroStep): string {
 export function macroDurationMs(steps: MacroStep[]): number {
   let total = 0
   for (const step of steps) {
+    if (step.type === 'mousePath') {
+      total += step.delayMs
+      for (const point of step.points) {
+        total += point.delayMs
+      }
+      continue
+    }
     total += step.delayMs
   }
   return total

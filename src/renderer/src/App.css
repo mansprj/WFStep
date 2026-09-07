@@ -1004,6 +1004,65 @@ button.secondary:disabled {
   cursor: default;
 }
 
+.macro-step-duration {
+  flex-shrink: 0;
+  font-size: 12px;
+  color: var(--text-dim);
+  white-space: nowrap;
+}
+
+.macro-step-toggle {
+  min-width: 26px;
+  text-align: center;
+}
+
+.macro-step-toggle:hover {
+  border-color: var(--accent);
+  color: var(--accent);
+}
+
+.path-row-points {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  margin-top: 8px;
+  padding-top: 8px;
+  border-top: 1px dashed var(--border);
+}
+
+.path-row-point {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.path-row-point-index {
+  margin-left: auto;
+  font-size: 11px;
+  color: var(--text-dim);
+}
+
+.path-row-point-remove {
+  font: inherit;
+  font-weight: 600;
+  color: var(--text);
+  background: var(--bg);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  padding: 2px 8px;
+  cursor: pointer;
+}
+
+.path-row-point-remove:hover:not(:disabled) {
+  border-color: var(--error);
+  color: var(--error);
+}
+
+.path-row-point-remove:disabled {
+  opacity: 0.4;
+  cursor: default;
+}
+
 .macro-step-editor {
   display: flex;
   flex-wrap: wrap;

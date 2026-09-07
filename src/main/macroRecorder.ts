@@ -2,6 +2,43 @@ import { WinLowLevelHooks } from './winLowLevelHooks'
 import type { KeyHookInfo, MouseHookInfo } from './winLowLevelHooks'
 import type { MacroButton, MacroStep } from '@shared/macros'
 
+// Collapses runs of two or more consecutive mouseMove steps into a single
+// mousePath step (the "keep it compact" part of the recording UX). The raw
+// samples are preserved as points, so playback and editing stay faithful.
+export function coalesceMouseMoves(steps: MacroStep[]): MacroStep[] {
+  const result: MacroStep[] = []
+  let run: typeof steps = []
+  const flush = (): void => {
+    if (run.length === 0) {
+      return
+    }
+    if (run.length === 1) {
+      result.push(run[0])
+    } else {
+      result.push({
+        type: 'mousePath',
+        delayMs: run[0].delayMs,
+        points: run.map((step) => ({
+          x: (step as { x: number }).x,
+          y: (step as { y: number }).y,
+          delayMs: step.delayMs,
+        })),
+      })
+    }
+    run = []
+  }
+  for (const step of steps) {
+    if (step.type === 'mouseMove') {
+      run.push(step)
+    } else {
+      flush()
+      result.push(step)
+    }
+  }
+  flush()
+  return result
+}
+
 // Movement coalescing thresholds: keep recordings compact while staying faithful.
 const MOVE_MIN_INTERVAL_MS = 20
 const MOVE_MIN_DISTANCE_PX = 8
@@ -276,6 +313,7 @@ export class MacroRecorder {
     this.hooks = null
     this.heldKeys.clear()
     this.stopVk = 0
+    this.steps = coalesceMouseMoves(this.steps)
     return this.steps
   }
 }
