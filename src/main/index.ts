@@ -3,7 +3,6 @@ import { join } from 'node:path'
 import electronUpdater from 'electron-updater'
 import { registerIpcHandlers } from './ipc'
 import { clearHotkeys, refreshHotkeys } from './hotkeyManager'
-import { cleanupMacroController } from './macroController'
 
 const { autoUpdater } = electronUpdater
 
@@ -186,6 +185,5 @@ if (!app.requestSingleInstanceLock()) {
 
   app.on('will-quit', () => {
     clearHotkeys()
-    cleanupMacroController()
   })
 }

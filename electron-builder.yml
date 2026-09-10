@@ -12,9 +12,6 @@ files:
   - resources/**
   - package.json
 asar: true
-asarUnpack:
-  - "**/node_modules/@koromix/**"
-  - "**/node_modules/koffi/vendor/**"
 win:
   target:
     - nsis

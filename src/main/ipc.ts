@@ -21,28 +21,17 @@ import {
 } from './workflowsManager'
 import { cancelWorkflowRun, startWorkflowRun } from './workflowRunner'
 import { hotkeyIssue, refreshHotkeys } from './hotkeyManager'
-import { clearLogs, listLogs, logEvent } from './logManager'
+import { clearLogs, listLogs } from './logManager'
 import { readSettings, writeSettings } from './settingsManager'
 import type { Settings } from './settingsManager'
+import { isAutomationAction } from '@shared/actions'
+import type { ActionResult } from '@shared/types'
 
 const THEMES = new Set(['graphite-amber', 'light', 'blue', 'system'])
 
 function isTheme(value: unknown): value is string {
   return typeof value === 'string' && THEMES.has(value)
 }
-import {
-  discardRecording,
-  getMacroState,
-  getPendingSteps,
-  startPlayback,
-  startRecording,
-  stopPlayback,
-  stopRecording,
-} from './macroController'
-import { addMacro, listMacros, removeMacro, updateMacro } from './macroManager'
-import { isAutomationAction } from '@shared/actions'
-import { isPlaybackConfig, isValidMacroStep } from '@shared/macros'
-import type { ActionResult } from '@shared/types'
 
 const IMAGE_EXTENSIONS: Record<string, string> = {
   '.png': 'image/png',
@@ -302,49 +291,6 @@ export function registerIpcHandlers(): void {
     if (process.platform === 'win32') {
       app.setLoginItemSettings({ openAtLogin: updated.autostart })
     }
-    if (partial.commandHotkeys !== undefined && typeof partial.commandHotkeys === 'object') {
-      refreshHotkeys()
-    }
     return updated
   })
-  ipcMain.handle('macros:list', () => listMacros())
-  ipcMain.handle('macros:add', (_event, value: unknown) => {
-    const result = addMacro(value)
-    if (result.success) {
-      logEvent({
-        source: 'macro',
-        context: value &&
-          typeof value === 'object' &&
-          typeof (value as Record<string, unknown>).name === 'string'
-          ? ((value as Record<string, unknown>).name as string)
-          : 'Macro',
-        actionType: 'save',
-        success: true,
-        message: 'Macro saved.',
-      })
-    }
-    return result
-  })
-  ipcMain.handle('macros:update', (_event, id: unknown, value: unknown) =>
-    updateMacro(id, value),
-  )
-  ipcMain.handle('macros:remove', (_event, id: unknown) => removeMacro(id))
-  ipcMain.handle('macros:record:start', () => startRecording())
-  ipcMain.handle('macros:record:stop', () => stopRecording())
-  ipcMain.handle('macros:record:discard', () => {
-    discardRecording()
-    return { success: true, message: 'Recording discarded.' }
-  })
-  ipcMain.handle('macros:record:pending', () => getPendingSteps())
-  ipcMain.handle('macros:state', () => getMacroState())
-  ipcMain.handle('macros:play:start', (_event, config: unknown, steps: unknown) => {
-    if (!isPlaybackConfig(config)) {
-      return { success: false, message: 'Invalid playback settings.' }
-    }
-    if (!Array.isArray(steps) || !steps.every(isValidMacroStep)) {
-      return { success: false, message: 'Invalid macro steps.' }
-    }
-    return startPlayback(steps, config)
-  })
-  ipcMain.handle('macros:play:stop', () => stopPlayback())
 }

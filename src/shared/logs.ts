@@ -1,4 +1,4 @@
-export type LogSource = 'workflow' | 'action' | 'macro'
+export type LogSource = 'workflow' | 'action'
 
 export interface LogEntry {
   id: number

@@ -1,16 +1,14 @@
 import { useState } from 'react'
 import './App.css'
-import Macros from './components/Macros'
 import Workflows from './components/Workflows'
 import ActionRunner from './components/ActionRunner'
 import Logs from './components/Logs'
 import Settings from './components/Settings'
 import UpdateIndicator from './components/UpdateIndicator'
 
-type TabKey = 'macros' | 'workflows' | 'runner' | 'logs' | 'settings'
+type TabKey = 'workflows' | 'runner' | 'logs' | 'settings'
 
 const TABS: { key: TabKey; label: string }[] = [
-  { key: 'macros', label: 'Macros' },
   { key: 'workflows', label: 'Workflows' },
   { key: 'runner', label: 'Runner' },
   { key: 'logs', label: 'Logs' },
@@ -18,14 +16,14 @@ const TABS: { key: TabKey; label: string }[] = [
 ]
 
 function App() {
-  const [tab, setTab] = useState<TabKey>('macros')
+  const [tab, setTab] = useState<TabKey>('workflows')
 
   return (
     <div className="app">
       <header className="app-header">
         <div className="app-heading">
           <h1>WF Step</h1>
-          <p className="subtitle">Workflows, macros & action runner</p>
+          <p className="subtitle">Workflows & action runner</p>
         </div>
         <UpdateIndicator />
       </header>
@@ -45,7 +43,6 @@ function App() {
       </nav>
 
       <main className="app-content">
-        {tab === 'macros' && <Macros />}
         {tab === 'workflows' && <Workflows />}
         {tab === 'runner' && <ActionRunner />}
         {tab === 'logs' && <Logs />}
