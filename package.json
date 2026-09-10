@@ -1,6 +1,6 @@
 {
   "name": "wfstep",
-  "version": "1.0.12",
+  "version": "1.0.13",
   "description": "Workflow automation runner with hotkeys and system tray",
   "author": "mansprj",
   "private": true,
