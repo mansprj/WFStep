@@ -18,7 +18,9 @@ const watchers = new Map<string, FSWatcher>()
 const fileCooldowns = new Map<string, number>()
 const fileDebounces = new Map<string, NodeJS.Timeout>()
 let clipboardTimer: NodeJS.Timeout | null = null
-let lastClipboard = ''
+// null = not initialised yet; we adopt whatever is in the clipboard when the
+// poller first starts so pre-existing text never triggers a spurious run.
+let lastClipboard: string | null = null
 
 function fire(workflow: Workflow, trigger: string): void {
   if (isWorkflowRunning()) {
@@ -128,35 +130,50 @@ function patternMatches(text: string, pattern: string): boolean {
   }
 }
 
-// Polls the clipboard every tick. Fires a workflow when a freshly copied text
-// matches one of its clipboard patterns — once per distinct piece of text.
-function scheduleClipboard(): void {
-  if (clipboardTimer !== null) {
+function clipboardTick(): void {
+  let text: string
+  try {
+    text = clipboard.readText()
+  } catch {
     return
   }
-  clipboardTimer = setInterval(() => {
-    let text: string
-    try {
-      text = clipboard.readText()
-    } catch {
-      return
-    }
-    text = text.trim()
-    if (text.length === 0 || text === lastClipboard) {
-      return
-    }
-    lastClipboard = text
-    for (const workflow of listWorkflows()) {
-      for (const schedule of workflow.schedules) {
-        if (
-          schedule.kind === 'clipboard' &&
-          patternMatches(text, schedule.pattern)
-        ) {
-          fire(workflow, `clipboard “${schedule.pattern}”`)
-        }
+  text = text.trim()
+  if (text.length === 0 || text === lastClipboard) {
+    return
+  }
+  lastClipboard = text
+  for (const workflow of listWorkflows()) {
+    for (const schedule of workflow.schedules) {
+      if (
+        schedule.kind === 'clipboard' &&
+        patternMatches(text, schedule.pattern)
+      ) {
+        fire(workflow, `clipboard “${schedule.pattern}”`)
       }
     }
-  }, CLIPBOARD_POLL_MS)
+  }
+}
+
+// Keeps the poller alive while any workflow has a clipboard trigger. The
+// poller is never torn down by refreshSchedules(), so lastClipboard survives
+// between workflow edits and no stale clipboard text can re-fire.
+function updateClipboardPolling(): void {
+  const wants = listWorkflows().some((workflow) =>
+    workflow.schedules.some((schedule) => schedule.kind === 'clipboard'),
+  )
+  if (wants && clipboardTimer === null) {
+    if (lastClipboard === null) {
+      try {
+        lastClipboard = clipboard.readText().trim()
+      } catch {
+        lastClipboard = ''
+      }
+    }
+    clipboardTimer = setInterval(clipboardTick, CLIPBOARD_POLL_MS)
+  } else if (!wants && clipboardTimer !== null) {
+    clearInterval(clipboardTimer)
+    clipboardTimer = null
+  }
 }
 
 // `includeStartup` is true only when called from app boot; editing a workflow's
@@ -183,7 +200,7 @@ export function refreshSchedules(includeStartup = false): void {
       }
     }
   }
-  scheduleClipboard()
+  updateClipboardPolling()
 }
 
 export function clearSchedules(): void {
@@ -204,5 +221,5 @@ export function clearSchedules(): void {
     clearInterval(clipboardTimer)
     clipboardTimer = null
   }
-  lastClipboard = ''
+  lastClipboard = null
 }
