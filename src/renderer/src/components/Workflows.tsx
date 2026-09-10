@@ -3,6 +3,14 @@ import { describeActionShort } from '@shared/actions'
 import type { AutomationAction } from '@shared/actions'
 import type { Workflow } from '@shared/workflows'
 import {
+  describeSchedule,
+  MAX_INTERVAL_MINUTES,
+  nextRunAt,
+  WEEKDAY_SHORT,
+  type Weekday,
+  type WorkflowSchedule,
+} from '@shared/schedules'
+import {
   actionFromInput,
   emptyExtras,
   inputFromAction,
@@ -25,6 +33,45 @@ interface StepRow {
 function displayName(path: string): string {
   const base = path.split(/[\\/]/).pop() ?? path
   return base.replace(/\.exe$/i, '')
+}
+
+// Friendly "next run" hint for the deterministic triggers (interval / time).
+function nextRunIn(workflow: Workflow): string | null {
+  let best: number | null = null
+  for (const schedule of workflow.schedules) {
+    const next = nextRunAt(schedule)
+    if (next === null) {
+      continue
+    }
+    const ms = next.getTime() - Date.now()
+    if (best === null || ms < best) {
+      best = ms
+    }
+  }
+  if (best === null) {
+    return null
+  }
+  if (best < 60_000) {
+    return 'in <1 min'
+  }
+  if (best < 3_600_000) {
+    return `in ${Math.ceil(best / 60_000)} min`
+  }
+  if (best < 86_400_000) {
+    return `in ${Math.ceil(best / 3_600_000)} h`
+  }
+  return new Date(Date.now() + best).toLocaleDateString([], {
+    month: 'short',
+    day: 'numeric',
+  })
+}
+
+function scheduleBadges(workflow: Workflow) {
+  return workflow.schedules.map((schedule, index) => (
+    <span key={index} className="schedule-badge">
+      {describeSchedule(schedule)}
+    </span>
+  ))
 }
 
 function WorkflowIcon({ path }: { path: string | null }) {
@@ -171,6 +218,7 @@ interface WorkflowEditorProps {
   initialSteps?: StepRow[]
   initialIcon?: string | null
   initialHotkey?: string | null
+  initialSchedules?: WorkflowSchedule[]
   submitLabel: string
   busy: boolean
   onCancel?: () => void
@@ -179,6 +227,7 @@ interface WorkflowEditorProps {
     steps: StepRow[],
     iconPath: string | null,
     hotkey: string | null,
+    schedules: WorkflowSchedule[],
   ) => Promise<boolean>
 }
 
@@ -187,6 +236,7 @@ function WorkflowEditor({
   initialSteps = [],
   initialIcon = null,
   initialHotkey = null,
+  initialSchedules = [],
   submitLabel,
   busy,
   onCancel,
@@ -196,6 +246,7 @@ function WorkflowEditor({
   const [steps, setSteps] = useState<StepRow[]>(initialSteps)
   const [iconPath, setIconPath] = useState<string | null>(initialIcon)
   const [hotkey, setHotkey] = useState<string | null>(initialHotkey)
+  const [schedules, setSchedules] = useState<WorkflowSchedule[]>(initialSchedules)
   const [dragIndex, setDragIndex] = useState<number | null>(null)
   const [overIndex, setOverIndex] = useState<number | null>(null)
 
@@ -291,11 +342,12 @@ function WorkflowEditor({
   }
 
   const submit = async (): Promise<void> => {
-    if (await onSubmit(name, steps, iconPath, hotkey)) {
+    if (await onSubmit(name, steps, iconPath, hotkey, schedules)) {
       setName('')
       setSteps([])
       setIconPath(null)
       setHotkey(null)
+      setSchedules([])
     }
   }
 
@@ -339,6 +391,17 @@ function WorkflowEditor({
         <strong>Ctrl</strong> or <strong>Alt</strong>, e.g.{' '}
         <kbd>Ctrl</kbd>+<kbd>9</kbd> or <kbd>Alt</kbd>+<kbd>M</kbd>. The
         shortcut works while WF Step runs in the tray.
+      </p>
+
+      <label>Schedule (optional)</label>
+      <ScheduleEditor
+        schedules={schedules}
+        onChange={setSchedules}
+        busy={busy}
+      />
+      <p className="schedule-hint">
+        Interval and time schedules use your system clock. File watches and
+        clipboard triggers only fire while WF Step is running.
       </p>
 
       <ul className="workflow-steps">
@@ -566,6 +629,201 @@ function WorkflowEditor({
   )
 }
 
+function ScheduleEditor({
+  schedules,
+  onChange,
+  busy,
+}: {
+  schedules: WorkflowSchedule[]
+  onChange: (schedules: WorkflowSchedule[]) => void
+  busy: boolean
+}) {
+  const [minutes, setMinutes] = useState('30')
+  const [time, setTime] = useState('09:00')
+  const [days, setDays] = useState<Weekday[]>([1, 2, 3, 4, 5])
+  const [watchPath, setWatchPath] = useState('')
+  const [pattern, setPattern] = useState('')
+
+  const toggleDay = (day: Weekday): void => {
+    setDays(
+      days.includes(day)
+        ? days.filter((other) => other !== day)
+        : [...days, day].sort((a, b) => a - b),
+    )
+  }
+
+  const add = (schedule: WorkflowSchedule): void => {
+    onChange([...schedules, schedule])
+  }
+
+  const addInterval = (): void => {
+    const value = Math.round(Number(minutes))
+    if (!Number.isInteger(value) || value < 1 || value > MAX_INTERVAL_MINUTES) {
+      window.alert(`Interval must be between 1 and ${MAX_INTERVAL_MINUTES} minutes.`)
+      return
+    }
+    add({ kind: 'interval', minutes: value })
+  }
+
+  const addTime = (): void => {
+    if (days.length === 0) {
+      window.alert('Pick at least one weekday.')
+      return
+    }
+    if (!/^([01]\d|2[0-3]):([0-5]\d)$/.test(time)) {
+      window.alert('Time must look like 09:00.')
+      return
+    }
+    add({ kind: 'time', days, time })
+  }
+
+  const addWatch = (): void => {
+    const path = watchPath.trim()
+    if (path.length === 0) {
+      window.alert('Enter a file or folder path to watch.')
+      return
+    }
+    add({ kind: 'fileWatch', path })
+    setWatchPath('')
+  }
+
+  const addClipboard = (): void => {
+    const value = pattern.trim()
+    if (value.length === 0) {
+      window.alert('Enter a text or pattern to match against.')
+      return
+    }
+    add({ kind: 'clipboard', pattern: value })
+    setPattern('')
+  }
+
+  const browseFolder = async (): Promise<void> => {
+    const path = await window.api.dialogs.selectFolder()
+    if (path !== null) {
+      setWatchPath(path)
+    }
+  }
+
+  return (
+    <div className="schedule-editor">
+      <div className="schedule-row">
+        <span className="schedule-row-label">Every</span>
+        <input
+          className="schedule-number"
+          type="number"
+          min={1}
+          max={MAX_INTERVAL_MINUTES}
+          value={minutes}
+          onChange={(event) => setMinutes(event.target.value)}
+          disabled={busy}
+        />
+        <span className="schedule-row-label">minutes</span>
+        <button type="button" onClick={addInterval} disabled={busy}>
+          Add
+        </button>
+      </div>
+
+      <div className="schedule-row">
+        <span className="schedule-row-label">At</span>
+        <input
+          className="schedule-time"
+          type="time"
+          value={time}
+          onChange={(event) => setTime(event.target.value)}
+          disabled={busy}
+        />
+        <span className="schedule-days">
+          {WEEKDAY_SHORT.map((label, index) => (
+            <button
+              key={label}
+              type="button"
+              className={`day-toggle${days.includes(index as Weekday) ? ' active' : ''}`}
+              onClick={() => toggleDay(index as Weekday)}
+              disabled={busy}
+            >
+              {label}
+            </button>
+          ))}
+        </span>
+        <button type="button" onClick={addTime} disabled={busy}>
+          Add
+        </button>
+      </div>
+
+      <div className="schedule-row">
+        <label className="schedule-startup-toggle">
+          <input
+            type="checkbox"
+            checked={schedules.some((schedule) => schedule.kind === 'startup')}
+            onChange={(event) =>
+              onChange(
+                event.target.checked
+                  ? [...schedules, { kind: 'startup' }]
+                  : schedules.filter((schedule) => schedule.kind !== 'startup'),
+              )
+            }
+            disabled={busy}
+          />
+          Run when the app starts
+        </label>
+      </div>
+
+      <div className="schedule-row">
+        <span className="schedule-row-label">Watch</span>
+        <input
+          type="text"
+          placeholder="File or folder path"
+          value={watchPath}
+          onChange={(event) => setWatchPath(event.target.value)}
+          disabled={busy}
+        />
+        <button type="button" onClick={browseFolder} disabled={busy}>
+          Browse…
+        </button>
+        <button type="button" onClick={addWatch} disabled={busy}>
+          Add
+        </button>
+      </div>
+
+      <div className="schedule-row">
+        <span className="schedule-row-label">Clipboard matches</span>
+        <input
+          type="text"
+          placeholder="Text or regular expression"
+          value={pattern}
+          onChange={(event) => setPattern(event.target.value)}
+          disabled={busy}
+        />
+        <button type="button" onClick={addClipboard} disabled={busy}>
+          Add
+        </button>
+      </div>
+
+      {schedules.length > 0 && (
+        <ul className="schedule-list">
+          {schedules.map((schedule, index) => (
+            <li key={index} className="schedule-item">
+              <span className="schedule-item-label">
+                {describeSchedule(schedule)}
+              </span>
+              <button
+                type="button"
+                onClick={() =>
+                  onChange(schedules.filter((_, other) => other !== index))
+                }
+                disabled={busy}
+                title="Remove schedule"
+              >
+                ×
+              </button>
+            </li>
+          ))}
+        </ul>
+      )}
+    </div>
+  )
+}
+
 function Workflows() {
   const [workflows, setWorkflows] = useState<Workflow[]>([])
   const [busy, setBusy] = useState(false)
@@ -616,6 +874,7 @@ function Workflows() {
     steps: StepRow[],
     iconPath: string | null,
     hotkey: string | null,
+    schedules: WorkflowSchedule[],
   ): Promise<boolean> => {
     const actions = steps
       .filter((step) => step.value.trim().length > 0)
@@ -624,12 +883,19 @@ function Workflows() {
     setBusy(true)
     const outcome =
       id === null
-        ? await window.api.workflows.add({ name, actions, iconPath, hotkey })
+        ? await window.api.workflows.add({
+            name,
+            actions,
+            iconPath,
+            hotkey,
+            schedules,
+          })
         : await window.api.workflows.update(id, {
             name,
             actions,
             iconPath,
             hotkey,
+            schedules,
           })
     setBusy(false)
     report(outcome)
@@ -696,6 +962,12 @@ function Workflows() {
                   {workflow.hotkey !== null && (
                     <span className="hotkey-badge">{workflow.hotkey}</span>
                   )}
+                  {scheduleBadges(workflow)}
+                  {nextRunIn(workflow) !== null && (
+                    <span className="next-run-badge">
+                      next {nextRunIn(workflow)}
+                    </span>
+                  )}
                 </span>
                 <ol className="workflow-summary">
                   {workflow.actions.map((action, index) => (
@@ -745,6 +1017,7 @@ function Workflows() {
           initialName={editing?.name}
           initialIcon={editing?.iconPath ?? null}
           initialHotkey={editing?.hotkey ?? null}
+          initialSchedules={editing?.schedules ?? []}
           initialSteps={
             editing?.actions.map((action) => {
               const input = inputFromAction(action)
@@ -757,8 +1030,8 @@ function Workflows() {
             setCreating(false)
             setEditing(null)
           }}
-          onSubmit={(name, steps, iconPath, hotkey) =>
-            save(editing?.id ?? null, name, steps, iconPath, hotkey)
+          onSubmit={(name, steps, iconPath, hotkey, schedules) =>
+            save(editing?.id ?? null, name, steps, iconPath, hotkey, schedules)
           }
         />
       ) : (

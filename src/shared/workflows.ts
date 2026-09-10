@@ -1,5 +1,7 @@
 import { describeAction, isAutomationAction } from './actions'
 import type { AutomationAction } from './actions'
+import { isValidWorkflowSchedule } from './schedules'
+import type { WorkflowSchedule } from './schedules'
 
 export interface Workflow {
   id: string
@@ -7,6 +9,7 @@ export interface Workflow {
   actions: AutomationAction[]
   iconPath: string | null
   hotkey: string | null
+  schedules: WorkflowSchedule[]
 }
 
 export interface WorkflowInput {
@@ -14,6 +17,7 @@ export interface WorkflowInput {
   actions: AutomationAction[]
   iconPath: string | null
   hotkey: string | null
+  schedules: WorkflowSchedule[]
 }
 
 export type WorkflowMutationResult =
@@ -51,6 +55,14 @@ export function isValidWorkflowInput(value: unknown): value is WorkflowInput {
     return false
   }
   if (record.hotkey !== null && typeof record.hotkey !== 'string') {
+    return false
+  }
+  // Missing `schedules` (older saved workflows) means "no schedule".
+  if (
+    record.schedules !== undefined &&
+    (!Array.isArray(record.schedules) ||
+      !record.schedules.every(isValidWorkflowSchedule))
+  ) {
     return false
   }
   return record.actions.every(isAutomationAction)

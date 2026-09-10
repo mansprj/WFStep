@@ -3,6 +3,7 @@ import { mkdirSync, readFileSync, writeFileSync } from 'node:fs'
 import { dirname, join } from 'node:path'
 import { app } from 'electron'
 import { isValidWorkflow, isValidWorkflowInput } from '@shared/workflows'
+import { isValidWorkflowSchedule } from '@shared/schedules'
 import type {
   Workflow,
   WorkflowInput,
@@ -22,7 +23,11 @@ function readWorkflows(): Workflow[] {
   const file = storeFile()
   try {
     const raw = JSON.parse(readFileSync(file, 'utf-8')) as unknown
-    cache = Array.isArray(raw) ? raw.filter(isValidWorkflow) : []
+    cache = Array.isArray(raw)
+      ? raw
+          .filter(isValidWorkflow)
+          .map((workflow) => ({ ...workflow, schedules: workflow.schedules ?? [] }))
+      : []
   } catch {
     cache = []
   }
@@ -48,7 +53,16 @@ function sanitizeInput(value: unknown): WorkflowInput | null {
   if (hotkey !== null && hotkey.length === 0) {
     hotkey = null
   }
-  return { name: value.name.trim(), actions: value.actions, iconPath, hotkey }
+  const schedules = Array.isArray(value.schedules)
+    ? value.schedules.filter(isValidWorkflowSchedule)
+    : []
+  return {
+    name: value.name.trim(),
+    actions: value.actions,
+    iconPath,
+    hotkey,
+    schedules,
+  }
 }
 
 export function listWorkflows(): Workflow[] {

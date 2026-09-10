@@ -3,6 +3,7 @@ import { join } from 'node:path'
 import electronUpdater from 'electron-updater'
 import { registerIpcHandlers } from './ipc'
 import { clearHotkeys, refreshHotkeys } from './hotkeyManager'
+import { clearSchedules, refreshSchedules } from './scheduler'
 
 const { autoUpdater } = electronUpdater
 
@@ -168,6 +169,7 @@ if (!app.requestSingleInstanceLock()) {
   app.whenReady().then(() => {
     registerIpcHandlers()
     refreshHotkeys()
+    refreshSchedules(true)
     createWindow()
     setupAutoUpdater()
     createTray()
@@ -185,5 +187,6 @@ if (!app.requestSingleInstanceLock()) {
 
   app.on('will-quit', () => {
     clearHotkeys()
+    clearSchedules()
   })
 }

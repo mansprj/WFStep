@@ -21,6 +21,7 @@ import {
 } from './workflowsManager'
 import { cancelWorkflowRun, startWorkflowRun } from './workflowRunner'
 import { hotkeyIssue, refreshHotkeys } from './hotkeyManager'
+import { refreshSchedules } from './scheduler'
 import { clearLogs, listLogs } from './logManager'
 import { readSettings, writeSettings } from './settingsManager'
 import type { Settings } from './settingsManager'
@@ -231,6 +232,7 @@ export function registerIpcHandlers(): void {
     const result = addWorkflow(value)
     if (result.success) {
       refreshHotkeys()
+      refreshSchedules()
       const issue =
         result.workflow?.hotkey !== null && result.workflow !== undefined
           ? hotkeyIssue(result.workflow.id)
@@ -245,6 +247,7 @@ export function registerIpcHandlers(): void {
     const result = updateWorkflow(id, value)
     if (result.success) {
       refreshHotkeys()
+      refreshSchedules()
       const issue =
         result.workflow?.hotkey !== null && result.workflow !== undefined
           ? hotkeyIssue(result.workflow.id)
@@ -259,6 +262,7 @@ export function registerIpcHandlers(): void {
     const result = removeWorkflow(id)
     if (result.success) {
       refreshHotkeys()
+      refreshSchedules()
     }
     return result
   })
