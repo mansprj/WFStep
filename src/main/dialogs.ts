@@ -1,4 +1,9 @@
-import { BrowserWindow, dialog, type OpenDialogOptions } from 'electron'
+import {
+  BrowserWindow,
+  dialog,
+  type OpenDialogOptions,
+  type SaveDialogOptions,
+} from 'electron'
 
 // Opens a native file picker limited to executables.
 // Returns the selected path, or null when cancelled.
@@ -29,6 +34,44 @@ export async function selectFolder(): Promise<string | null> {
   const options: OpenDialogOptions = {
     title: 'Select folder',
     properties: ['openDirectory', 'createDirectory'],
+  }
+
+  const window = BrowserWindow.getFocusedWindow()
+  const result = window
+    ? await dialog.showOpenDialog(window, options)
+    : await dialog.showOpenDialog(options)
+
+  if (result.canceled || result.filePaths.length === 0) {
+    return null
+  }
+  return result.filePaths[0]
+}
+
+// Saves a workflow JSON file. Returns the chosen path, or null when cancelled.
+export async function selectJsonSave(defaultName: string): Promise<string | null> {
+  const options: SaveDialogOptions = {
+    title: 'Export workflow',
+    defaultPath: defaultName.endsWith('.json') ? defaultName : `${defaultName}.json`,
+    filters: [{ name: 'Workflow JSON', extensions: ['json'] }],
+  }
+
+  const window = BrowserWindow.getFocusedWindow()
+  const result = window
+    ? await dialog.showSaveDialog(window, options)
+    : await dialog.showSaveDialog(options)
+
+  if (result.canceled || result.filePath.length === 0) {
+    return null
+  }
+  return result.filePath
+}
+
+// Opens a workflow JSON file. Returns the chosen path, or null when cancelled.
+export async function selectJsonOpen(): Promise<string | null> {
+  const options: OpenDialogOptions = {
+    title: 'Import workflow',
+    properties: ['openFile'],
+    filters: [{ name: 'Workflow JSON', extensions: ['json'] }],
   }
 
   const window = BrowserWindow.getFocusedWindow()

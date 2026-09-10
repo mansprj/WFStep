@@ -9,6 +9,18 @@ import type {
 } from '@shared/workflows'
 import type { WindowInfo } from '@shared/windows'
 
+interface WorkflowExportResult {
+  success: boolean
+  message: string
+  path?: string
+}
+
+interface WorkflowImportResult {
+  success: boolean
+  message: string
+  input?: WorkflowInput
+}
+
 declare global {
   interface Window {
     api: {
@@ -53,6 +65,8 @@ declare global {
         remove: (id: string) => Promise<WorkflowMutationResult>
         run: (id: string) => Promise<{ success: boolean; message: string }>
         cancel: () => Promise<{ success: boolean; message: string }>
+        export: (input: WorkflowInput) => Promise<WorkflowExportResult>
+        import: () => Promise<WorkflowImportResult>
         onProgress: (
           callback: (progress: WorkflowProgress) => void,
         ) => () => void

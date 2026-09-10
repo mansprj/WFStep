@@ -2,6 +2,17 @@ import type { ReactElement } from 'react'
 import type { ActionKind } from '../actionForm'
 
 const ICONS: Record<ActionKind, ReactElement> = {
+  setVariable: (
+    <svg viewBox="0 0 16 16" fill="none">
+      <path
+        d="M5 3L7.5 8 5 13M8.5 3L11 8l-2.5 5M2 3h4M10 3h4M2 13h4M10 13h4"
+        stroke="currentColor"
+        strokeWidth="1.5"
+        strokeLinecap="round"
+        strokeLinejoin="round"
+      />
+    </svg>
+  ),
   start: (
     <svg viewBox="0 0 16 16">
       <path d="M4 2l10 6-10 6z" fill="currentColor" />

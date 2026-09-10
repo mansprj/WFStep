@@ -107,6 +107,12 @@ export async function executeAction(
 ): Promise<ActionResult> {
   let result: ActionResult
   switch (action.type) {
+    case 'setVariable':
+      result = {
+        success: true,
+        message: `Variable assignment only takes effect inside a workflow run.`,
+      }
+      break
     case 'start':
       result = await launchProcess(action.executablePath)
       break

@@ -60,6 +60,8 @@ const api = {
     remove: (id: string) => ipcRenderer.invoke('workflows:remove', id),
     run: (id: string) => ipcRenderer.invoke('workflows:run', id),
     cancel: () => ipcRenderer.invoke('workflows:cancel'),
+    export: (input: WorkflowInput) => ipcRenderer.invoke('workflows:export', input),
+    import: () => ipcRenderer.invoke('workflows:import'),
     onProgress: (callback: (progress: WorkflowProgress) => void) => {
       const listener = (_event: Electron.IpcRendererEvent, progress: WorkflowProgress) => {
         callback(progress)

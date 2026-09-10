@@ -1,7 +1,8 @@
 import { useEffect, useState } from 'react'
 import { describeActionShort } from '@shared/actions'
 import type { AutomationAction } from '@shared/actions'
-import type { Workflow } from '@shared/workflows'
+import { isVariableName } from '@shared/variables'
+import type { Workflow, WorkflowInput } from '@shared/workflows'
 import {
   describeSchedule,
   MAX_INTERVAL_MINUTES,
@@ -249,6 +250,8 @@ function WorkflowEditor({
   const [schedules, setSchedules] = useState<WorkflowSchedule[]>(initialSchedules)
   const [dragIndex, setDragIndex] = useState<number | null>(null)
   const [overIndex, setOverIndex] = useState<number | null>(null)
+  const [past, setPast] = useState<StepRow[][]>([])
+  const [future, setFuture] = useState<StepRow[][]>([])
 
   // Programs referenced by "Start process" steps, offered as shortcuts when
   // adding Stop/Restart steps so the same path is reused.
@@ -260,33 +263,72 @@ function WorkflowEditor({
     ),
   ]
 
+  const commit = (next: StepRow[]): void => {
+    setPast((current) => [steps, ...current].slice(0, 100))
+    setFuture([])
+    setSteps(next)
+  }
+
+  const undo = (): void => {
+    if (past.length === 0) {
+      return
+    }
+    const [previous, ...rest] = past
+    setPast(rest)
+    setFuture((current) => [steps, ...current].slice(0, 100))
+    setSteps(previous)
+  }
+
+  const redo = (): void => {
+    if (future.length === 0) {
+      return
+    }
+    const [nextState, ...rest] = future
+    setFuture(rest)
+    setPast((current) => [steps, ...current].slice(0, 100))
+    setSteps(nextState)
+  }
+
+  const onEditorKeyDown = (event: React.KeyboardEvent): void => {
+    if (!(event.ctrlKey || event.metaKey)) {
+      return
+    }
+    const key = event.key.toLowerCase()
+    if (key === 'z') {
+      event.preventDefault()
+      if (event.shiftKey) {
+        redo()
+      } else {
+        undo()
+      }
+    } else if (key === 'y') {
+      event.preventDefault()
+      redo()
+    }
+  }
+
   const updateStep = (index: number, patch: Partial<StepRow>): void => {
-    setSteps((current) =>
-      current.map((step, i) => (i === index ? { ...step, ...patch } : step)),
+    commit(
+      steps.map((step, i) => (i === index ? { ...step, ...patch } : step)),
     )
   }
 
   const addStep = (): void => {
-    setSteps((current) => [
-      ...current,
-      { kind: 'start', value: '', extras: emptyExtras() },
-    ])
+    commit([...steps, { kind: 'start', value: '', extras: emptyExtras() }])
   }
 
   const removeStep = (index: number): void => {
-    setSteps((current) => current.filter((_, i) => i !== index))
+    commit(steps.filter((_, i) => i !== index))
   }
 
   const reorderStep = (from: number, to: number): void => {
-    setSteps((current) => {
-      if (from === to || to < 0 || to >= current.length) {
-        return current
-      }
-      const next = [...current]
-      const [step] = next.splice(from, 1)
-      next.splice(to, 0, step)
-      return next
-    })
+    if (from === to || to < 0 || to >= steps.length) {
+      return
+    }
+    const next = [...steps]
+    const [step] = next.splice(from, 1)
+    next.splice(to, 0, step)
+    commit(next)
   }
 
   const browse = async (index: number): Promise<void> => {
@@ -352,7 +394,10 @@ function WorkflowEditor({
   }
 
   return (
-    <div className="workflow-editor">
+    <div
+      className="workflow-editor"
+      onKeyDown={onEditorKeyDown}
+    >
       <label htmlFor="workflow-name">Workflow name</label>
       <input
         id="workflow-name"
@@ -516,7 +561,8 @@ function WorkflowEditor({
               step.kind === 'ifProcessRunning' ||
               step.kind === 'ifProcessStopped' ||
               step.kind === 'waitForWindow' ||
-              step.kind === 'clickText') && (
+              step.kind === 'clickText' ||
+              step.kind === 'setVariable') && (
               <div className="input-row step-extra">
                 {(step.kind === 'ifWindowExists' ||
                   step.kind === 'ifWindowMissing' ||
@@ -555,6 +601,25 @@ function WorkflowEditor({
                       onChange={(event) =>
                         updateStep(index, {
                           extras: { ...step.extras, window: event.target.value },
+                        })
+                      }
+                      disabled={busy}
+                    />
+                  </label>
+                )}
+                {step.kind === 'setVariable' && (
+                  <label className="step-extra-field">
+                    Value
+                    <input
+                      type="text"
+                      placeholder="Value — may use ${name} references"
+                      value={step.extras.variableValue}
+                      onChange={(event) =>
+                        updateStep(index, {
+                          extras: {
+                            ...step.extras,
+                            variableValue: event.target.value,
+                          },
                         })
                       }
                       disabled={busy}
@@ -615,6 +680,22 @@ function WorkflowEditor({
       <div className="actions">
         <button type="button" onClick={addStep} disabled={busy}>
           Add step
+        </button>
+        <button
+          type="button"
+          onClick={undo}
+          disabled={busy || past.length === 0}
+          title="Undo (Ctrl+Z)"
+        >
+          Undo
+        </button>
+        <button
+          type="button"
+          onClick={redo}
+          disabled={busy || future.length === 0}
+          title="Redo (Ctrl+Y)"
+        >
+          Redo
         </button>
         <button type="button" onClick={submit} disabled={busy}>
           {submitLabel}
@@ -876,6 +957,18 @@ function Workflows() {
     hotkey: string | null,
     schedules: WorkflowSchedule[],
   ): Promise<boolean> => {
+    for (const step of steps) {
+      if (
+        step.kind === 'setVariable' &&
+        !isVariableName(step.value.trim())
+      ) {
+        setStatus({
+          kind: 'error',
+          message: `"${step.value.trim()}" is not a valid variable name. Use letters, digits, "_" or "-", starting with a letter.`,
+        })
+        return false
+      }
+    }
     const actions = steps
       .filter((step) => step.value.trim().length > 0)
       .map((step) => actionFromInput(step.kind, step.value, step.extras))
@@ -925,6 +1018,30 @@ function Workflows() {
       setRunId(workflow.id)
     } else {
       setStatus({ kind: 'error', message: outcome.message })
+    }
+  }
+
+  const exportWorkflow = async (workflow: Workflow): Promise<void> => {
+    const input: WorkflowInput = {
+      name: workflow.name,
+      actions: workflow.actions,
+      iconPath: workflow.iconPath,
+      hotkey: workflow.hotkey,
+      schedules: workflow.schedules,
+    }
+    report(await window.api.workflows.export(input))
+  }
+
+  const importWorkflow = async (): Promise<void> => {
+    const imported = await window.api.workflows.import()
+    if (!imported.success || imported.input === undefined) {
+      setStatus({ kind: 'error', message: imported.message })
+      return
+    }
+    const outcome = await window.api.workflows.add(imported.input)
+    report(outcome)
+    if (outcome.success) {
+      await reload()
     }
   }
 
@@ -1001,6 +1118,14 @@ function Workflows() {
                 </button>
                 <button
                   type="button"
+                  onClick={() => exportWorkflow(workflow)}
+                  disabled={running || busy}
+                  title="Save this workflow as a JSON file"
+                >
+                  Export
+                </button>
+                <button
+                  type="button"
                   onClick={() => removeWorkflow(workflow)}
                   disabled={running || busy}
                 >
@@ -1035,14 +1160,24 @@ function Workflows() {
           }
         />
       ) : (
-        <button
-          type="button"
-          className="secondary"
-          onClick={() => setCreating(true)}
-          disabled={running || busy}
-        >
-          New workflow
-        </button>
+        <div className="actions">
+          <button
+            type="button"
+            className="secondary"
+            onClick={() => setCreating(true)}
+            disabled={running || busy}
+          >
+            New workflow
+          </button>
+          <button
+            type="button"
+            onClick={importWorkflow}
+            disabled={running || busy}
+            title="Load a workflow from a JSON file"
+          >
+            Import JSON
+          </button>
+        </div>
       )}
 
       {progress.kind !== 'idle' && (

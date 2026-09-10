@@ -1,6 +1,7 @@
 import { BrowserWindow } from 'electron'
 import { executeAction } from './actions/executor'
 import { logEvent } from './logManager'
+import { resolvePlaceholders } from '@shared/variables'
 import { describeAction } from '@shared/actions'
 import type { AutomationAction } from '@shared/actions'
 import type { Workflow, WorkflowProgress } from '@shared/workflows'
@@ -19,6 +20,65 @@ function actionSkipCount(action: AutomationAction): number {
       return action.skipOnFail
     default:
       return 0
+  }
+}
+
+// A copy of the action in which every free-text parameter has its ${name}
+// placeholders substituted against the current run variables. Runs in order,
+// so a variable is usable in any step after the one that set it.
+function withVars(
+  action: AutomationAction,
+  vars: ReadonlyMap<string, string>,
+): AutomationAction {
+  const text = (value: string): string => resolvePlaceholders(value, vars)
+  switch (action.type) {
+    case 'setVariable':
+      return { type: 'setVariable', name: action.name, value: text(action.value) }
+    case 'start':
+      return { type: 'start', executablePath: text(action.executablePath) }
+    case 'stop':
+      return { type: 'stop', processName: text(action.processName) }
+    case 'restart':
+      return { type: 'restart', processName: text(action.processName) }
+    case 'delay':
+      return { type: 'delay', ms: action.ms }
+    case 'shell':
+      return { type: 'shell', command: text(action.command) }
+    case 'openUrl':
+      return { type: 'openUrl', url: text(action.url) }
+    case 'openFolder':
+      return { type: 'openFolder', path: text(action.path) }
+    case 'activateWindow':
+      return { type: 'activateWindow', window: text(action.window) }
+    case 'waitForWindow':
+      return {
+        type: 'waitForWindow',
+        window: text(action.window),
+        timeoutMs: action.timeoutMs,
+      }
+    case 'clickText':
+      return {
+        type: 'clickText',
+        text: text(action.text),
+        window: text(action.window),
+        timeoutMs: action.timeoutMs,
+      }
+    case 'ifWindowExists':
+      return { type: 'ifWindowExists', window: text(action.window), skipOnFail: action.skipOnFail }
+    case 'ifWindowMissing':
+      return { type: 'ifWindowMissing', window: text(action.window), skipOnFail: action.skipOnFail }
+    case 'ifProcessRunning':
+      return {
+        type: 'ifProcessRunning',
+        processName: text(action.processName),
+        skipOnFail: action.skipOnFail,
+      }
+    case 'ifProcessStopped':
+      return {
+        type: 'ifProcessStopped',
+        processName: text(action.processName),
+        skipOnFail: action.skipOnFail,
+      }
   }
 }
 
@@ -58,6 +118,7 @@ export async function startWorkflowRun(
 
   void (async () => {
     const totalSteps = workflow.actions.length
+    const vars = new Map<string, string>()
     logEvent({
       source: 'workflow',
       context: workflow.name,
@@ -79,8 +140,23 @@ export async function startWorkflowRun(
         break
       }
 
-      const action = workflow.actions[stepIndex]
+      const action = withVars(workflow.actions[stepIndex], vars)
       send(progress(stepIndex, totalSteps, 'started', describeAction(action)))
+
+      // Variable assignment is handled by the run loop itself so later steps
+      // can consume the new value.
+      if (action.type === 'setVariable') {
+        vars.set(action.name, action.value)
+        send(
+          progress(
+            stepIndex,
+            totalSteps,
+            'succeeded',
+            `Variable "${action.name}" set to "${action.value}".`,
+          ),
+        )
+        continue
+      }
 
       const result = await executeAction(action, {
         source: 'workflow',

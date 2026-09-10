@@ -22,6 +22,7 @@ interface GuideSection {
 // Extra context shown for each action, on top of the generated help text.
 // Keep adding entries here whenever an action gains new behaviour.
 const EXTRA_ACTION_TIPS: Partial<Record<ActionKind, string>> = {
+  setVariable: 'Stores a value under a name (letters, digits, "_", "-"). Reference it in any later step with ${name} — e.g. set path = C:\\Files, then "Open folder" = ${path}. Runs in order: a step can only use variables set by earlier steps.',
   start: 'Use the Browse… button to pick the .exe. Add a Delay step after it if the program takes time to open.',
   stop: 'Works with the full path or just the process name (e.g. Discord).',
   restart: 'Stops then starts the process. Use the path you started it with when possible.',

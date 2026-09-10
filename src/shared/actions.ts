@@ -1,4 +1,5 @@
 export type AutomationAction =
+  | { type: 'setVariable'; name: string; value: string }
   | { type: 'start'; executablePath: string }
   | { type: 'stop'; processName: string }
   | { type: 'restart'; processName: string }
@@ -14,6 +15,8 @@ export type AutomationAction =
   | { type: 'ifProcessRunning'; processName: string; skipOnFail: number }
   | { type: 'ifProcessStopped'; processName: string; skipOnFail: number }
 
+import { isVariableName } from './variables'
+
 function isNonEmptyString(value: unknown): value is string {
   return typeof value === 'string' && value.trim().length > 0
 }
@@ -27,6 +30,11 @@ export function isAutomationAction(value: unknown): value is AutomationAction {
   const record = value as Record<string, unknown>
 
   switch (record.type as string) {
+    case 'setVariable':
+      return (
+        isVariableName(typeof record.name === 'string' ? record.name : '') &&
+        typeof record.value === 'string'
+      )
     case 'start':
       return isNonEmptyString(record.executablePath)
     case 'stop':
@@ -81,6 +89,8 @@ function isSkipCount(value: unknown): value is number {
 // Short human-readable description used in workflow progress and step lists.
 export function describeAction(action: AutomationAction): string {
   switch (action.type) {
+    case 'setVariable':
+      return `Set variable "${action.name}" = ${action.value}`
     case 'start':
       return `Start process: ${action.executablePath}`
     case 'stop':
@@ -119,6 +129,8 @@ function baseName(path: string): string {
 // Compact label for lists: keeps the key detail, drops the full path.
 export function describeActionShort(action: AutomationAction): string {
   switch (action.type) {
+    case 'setVariable':
+      return `Set ${action.name}`
     case 'start':
       return `Start ${baseName(action.executablePath)}`
     case 'stop':

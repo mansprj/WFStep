@@ -22,11 +22,13 @@ import {
 import { cancelWorkflowRun, startWorkflowRun } from './workflowRunner'
 import { hotkeyIssue, refreshHotkeys } from './hotkeyManager'
 import { refreshSchedules } from './scheduler'
+import { importWorkflow, exportWorkflow } from './workflowFiles'
 import { clearLogs, listLogs } from './logManager'
 import { readSettings, writeSettings } from './settingsManager'
 import type { Settings } from './settingsManager'
 import { isAutomationAction } from '@shared/actions'
 import type { ActionResult } from '@shared/types'
+import type { WorkflowInput } from '@shared/workflows'
 
 const THEMES = new Set(['graphite-amber', 'light', 'blue', 'system'])
 
@@ -282,6 +284,10 @@ export function registerIpcHandlers(): void {
     }
     return { success: false, message: 'No workflow is running.' }
   })
+  ipcMain.handle('workflows:export', async (_event, value: unknown) =>
+    exportWorkflow(value as WorkflowInput),
+  )
+  ipcMain.handle('workflows:import', () => importWorkflow())
   ipcMain.handle('settings:get', () => readSettings())
   ipcMain.handle('settings:set', (_event, value: unknown) => {
     if (typeof value !== 'object' || value === null) {

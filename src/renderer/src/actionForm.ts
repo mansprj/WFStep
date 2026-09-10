@@ -3,6 +3,7 @@ import type { AutomationAction } from '@shared/actions'
 export type ActionKind = AutomationAction['type']
 
 export const KIND_LABELS: Record<ActionKind, string> = {
+  setVariable: 'Set variable',
   start: 'Start process',
   stop: 'Stop process',
   restart: 'Restart process',
@@ -20,6 +21,7 @@ export const KIND_LABELS: Record<ActionKind, string> = {
 }
 
 export const KIND_PLACEHOLDERS: Record<ActionKind, string> = {
+  setVariable: 'Variable name (e.g. fileName)',
   start: 'C:\\Path\\To\\App.exe',
   stop: 'Executable path or process name (e.g. Discord)',
   restart: 'Executable path or process name (e.g. Discord)',
@@ -37,6 +39,7 @@ export const KIND_PLACEHOLDERS: Record<ActionKind, string> = {
 }
 
 export const KIND_HELP: Record<ActionKind, string> = {
+  setVariable: 'Store a value under a name. Later steps can use it with ${name}.',
   start: 'Launch an executable file.',
   stop: 'Stop a running program by executable path or process name.',
   restart: 'Restart a running program by executable path or process name.',
@@ -60,18 +63,31 @@ export interface ActionExtras {
   skipOnFail: number
   timeoutMs: number
   window: string
+  variableValue: string
 }
 
 export function emptyExtras(): ActionExtras {
-  return { skipOnFail: 1, timeoutMs: 10000, window: '' }
+  return {
+    skipOnFail: 1,
+    timeoutMs: 10000,
+    window: '',
+    variableValue: '',
+  }
 }
 
 export function actionFromInput(
   kind: ActionKind,
   value: string,
-  extras: ActionExtras = { skipOnFail: 1, timeoutMs: 10000, window: '' },
+  extras: ActionExtras = {
+    skipOnFail: 1,
+    timeoutMs: 10000,
+    window: '',
+    variableValue: '',
+  },
 ): AutomationAction {
   switch (kind) {
+    case 'setVariable':
+      return { type: 'setVariable', name: value, value: extras.variableValue }
     case 'start':
       return { type: 'start', executablePath: value }
     case 'stop':
@@ -120,6 +136,12 @@ export function inputFromAction(
   action: AutomationAction,
 ): { kind: ActionKind; value: string; extras: ActionExtras } {
   switch (action.type) {
+    case 'setVariable':
+      return {
+        kind: 'setVariable',
+        value: action.name,
+        extras: { ...emptyExtras(), variableValue: action.value },
+      }
     case 'start':
       return { kind: 'start', value: action.executablePath, extras: emptyExtras() }
     case 'stop':
