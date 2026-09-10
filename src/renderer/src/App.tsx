@@ -4,14 +4,16 @@ import Workflows from './components/Workflows'
 import ActionRunner from './components/ActionRunner'
 import Logs from './components/Logs'
 import Settings from './components/Settings'
+import Guide from './components/Guide'
 import UpdateIndicator from './components/UpdateIndicator'
 
-type TabKey = 'workflows' | 'runner' | 'logs' | 'settings'
+type TabKey = 'workflows' | 'runner' | 'logs' | 'settings' | 'guide'
 
 const TABS: { key: TabKey; label: string }[] = [
   { key: 'workflows', label: 'Workflows' },
   { key: 'runner', label: 'Runner' },
   { key: 'logs', label: 'Logs' },
+  { key: 'guide', label: 'Guide' },
   { key: 'settings', label: 'Settings' },
 ]
 
@@ -46,6 +48,7 @@ function App() {
         {tab === 'workflows' && <Workflows />}
         {tab === 'runner' && <ActionRunner />}
         {tab === 'logs' && <Logs />}
+        {tab === 'guide' && <Guide />}
         {tab === 'settings' && <Settings />}
       </main>
     </div>
