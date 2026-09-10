@@ -13,6 +13,9 @@ out
 dist-ssr
 *.local
 
+# Internal planning notes (not for the public repo)
+memory/
+
 # Editor directories and files
 .vscode/*
 !.vscode/extensions.json
